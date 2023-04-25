@@ -14,7 +14,7 @@ public class Connect4Server extends Thread{
     public Connect4Server(int port_config){
         port = port_config;
         live = true;
-        run();
+        start();
     }
 
     public void stopServer(){
@@ -29,9 +29,7 @@ public class Connect4Server extends Thread{
             while (live){
                 Socket socket = sock.accept();
                 ClientConnection con = new ClientConnection();
-
             }
-
 
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);
@@ -41,15 +39,26 @@ public class Connect4Server extends Thread{
 
     }
 
-class ClientConnection{
-        public ClientConnection(){
-            run();
+    class ClientConnection {
+        public ClientConnection() {
+            start();
         }
-    private void newGame(){}
-    private void joinGame(){}
-    private void spectate(){}
 
-}
+        private void newGame() {
+        }
+
+        private void joinGame() {
+        }
+
+        private void spectate() {
+        }
+
+    }
+
+    class DatabaseManager {
+
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
