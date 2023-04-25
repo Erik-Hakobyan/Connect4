@@ -1,5 +1,7 @@
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello world!");
+        int port = 1234;
+        new Connect4Server(port);
+        new Connect4User();
     }
 }
