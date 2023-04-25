@@ -20,7 +20,6 @@ public class Connect4Server extends Thread{
     public void stopServer(){
         live = false;
     }
-
     @Override
     public void run(){
         try {
@@ -46,7 +45,9 @@ class ClientConnection{
         public ClientConnection(){
             run();
         }
-
+    private void newGame(){}
+    private void joinGame(){}
+    private void spectate(){}
 
 }
     public static void main(String[] args) {
@@ -57,6 +58,5 @@ class ClientConnection{
                 new Connect4Server(port);
             }
         });
-
     }
 }

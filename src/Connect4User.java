@@ -86,22 +86,23 @@ public class Connect4User {
         frame.add(inputPanel, BorderLayout.CENTER);
         frame.add(buttonPanel, BorderLayout.SOUTH);
 
+        //REQUEST TYPES: 1 IS NEW GAME, 2 IS JOIN GAME, 3 IS SPECTATE
         newGameButton.addActionListener((new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                initialCapture();
+                initialCapture(1);
             }
         }));
         joinGameButton.addActionListener((new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                initialCapture();
+                initialCapture(2);
             }
         }));
         spectateGameButton.addActionListener((new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                initialCapture();
+                initialCapture(3);
             }
         }));
         // Display the window
@@ -110,15 +111,15 @@ public class Connect4User {
 
     }
 
-    public void initialCapture() {
+    public void initialCapture(int RequestType) {
         name = name_text_field.getText();
         username = username_text_field.getText();
         game_id = game_id_text_field.getText();
         server_ip = server_ip_text_field.getText();
-        ConnectServer(name, username, game_id, server_ip);
+        ConnectServer(RequestType, name, username, game_id, server_ip);
     }
 
-    public static void ConnectServer(String name, String username, String game_id, String server_ip) {
+    public static void ConnectServer(int RequestType, String name, String username, String game_id, String server_ip) {
         String[] parts = server_ip.split(":");
         String ip = parts[0];
         String port = parts[1];
