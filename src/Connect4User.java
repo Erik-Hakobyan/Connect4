@@ -23,7 +23,7 @@ public class Connect4User {
         int rightPadding = 20;
         JFrame frame = new JFrame("Welcome to Connect4");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(500, 400);
+        frame.setSize(500, 500);
         frame.setLayout(new BorderLayout());
         JPanel inputPanel = new JPanel(new GridLayout(4, 5));
         JLabel name_label = new JLabel("Name:");
@@ -33,9 +33,6 @@ public class Connect4User {
         inputPanel.add(name_label);
         name_text_field = new JTextField();
         name_text_field.setHorizontalAlignment(SwingConstants.CENTER);
-        name_text_field.setBorder(BorderFactory.createCompoundBorder(
-                name_text_field.getBorder(),
-                BorderFactory.createEmptyBorder(0, 0, 0, rightPadding)));
         inputPanel.add(name_text_field);
         JLabel username_label = new JLabel("Username: ");
         username_label.setVerticalAlignment(SwingConstants.CENTER);
