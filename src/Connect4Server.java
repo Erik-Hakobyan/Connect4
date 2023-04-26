@@ -10,27 +10,28 @@ import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.util.Hashtable;
 
-public class Connect4Server extends Thread{
+public class Connect4Server extends Thread {
     private int port;
     private boolean live;
-    Hashtable<Integer, ClientConnection> Games = new Hashtable<>();
+    Hashtable<String, ClientConnection[]> Games = new Hashtable<>();
 
-    public Connect4Server(int port_config){
+    public Connect4Server(int port_config) {
         port = port_config;
         live = true;
         start();
     }
 
-    public void stopServer(){
+    public void stopServer() {
         live = false;
     }
+
     @Override
-    public void run(){
+    public void run() {
         try {
-            System.out.println("Server IP Address: "  + InetAddress.getLocalHost().getHostAddress());
+            System.out.println("Server IP Address: " + InetAddress.getLocalHost().getHostAddress());
             System.out.println("Port: " + Integer.toString(port));
             ServerSocket sock = new ServerSocket(port);
-            while (live){
+            while (live) {
                 Socket socket = sock.accept();
                 ClientConnection con = new ClientConnection(socket);
             }
@@ -47,8 +48,9 @@ public class Connect4Server extends Thread{
         private static final String SYMBOLS = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
         private BufferedReader in;
         private PrintStream out;
-        private int game_mode;
-        private String name, username, game_id;
+        private int game_mode = 0;
+        public String name, username, game_id;
+        private String game_key;
         Socket sock;
 
         public ClientConnection(Socket socket) {
@@ -59,15 +61,36 @@ public class Connect4Server extends Thread{
         }
 
         private void newGame() {
-            String gameKey = generateKey();
-
+            game_key = generateKey();
+            ClientConnection[] client_array = new ClientConnection[2];
+            client_array[0] = this;
+            Games.put(game_key, client_array);
+            out.println("GK:" + game_key);
 
         }
 
         private void joinGame() {
+            if (Games.contains(game_key)) {
+                ClientConnection[] array = Games.get(game_key);
+                if (array[0] != null && array[1] != null) {
+                    out.println("Error 100: 2 Users Already In Game. Spectate Instead");
+                } else {
+                    array[1] = this;
+                    Games.put(game_key, array);
+                    for (ClientConnection cc : array) {
+                        cc.relay(name + "(" + username + ")" + "has entered the game!");
+
+                    }
+                }
+            }
+
         }
 
         private void spectate() {
+        }
+
+        private void relay(String message) {
+            out.println(message);
         }
 
         private static String generateKey() {
@@ -84,7 +107,19 @@ public class Connect4Server extends Thread{
         }
 
         private void initializeMode() {
-
+            switch (game_mode) {
+                case 1:
+                    newGame();
+                    break;
+                case 2:
+                    joinGame();
+                    break;
+                case 3:
+                    spectate();
+                    break;
+                default:
+                    break;
+            }
         }
 
 
@@ -99,11 +134,14 @@ public class Connect4Server extends Thread{
                     name = parts[2];
                     username = parts[3];
                     game_id = parts[4];
+                    game_key = parts[5];
+                    return true;
                 }
 
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+            return false;
 
         }
 
@@ -116,9 +154,10 @@ public class Connect4Server extends Thread{
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                int port = 1234;
-                new Connect4Server(port);
-            }
-        });
+                    int port = 1234;
+                    new Connect4Server(port);
+                }
+            });
+        }
     }
 }
