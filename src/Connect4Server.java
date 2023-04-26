@@ -10,6 +10,7 @@ import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.util.Hashtable;
 
+
 public class Connect4Server extends Thread {
     private int port;
     private boolean live;
@@ -29,7 +30,7 @@ public class Connect4Server extends Thread {
     public void run() {
         try {
             System.out.println("Server IP Address: " + InetAddress.getLocalHost().getHostAddress());
-            System.out.println("Port: " + Integer.toString(port));
+            System.out.println("Port: " + port);
             ServerSocket sock = new ServerSocket(port);
             while (live) {
                 Socket socket = sock.accept();
@@ -62,7 +63,7 @@ public class Connect4Server extends Thread {
 
         private void newGame() {
             game_key = generateKey();
-            Hashtable<String, ClientConnection> table = new Hashtable<>;
+            Hashtable<String, ClientConnection> table = new Hashtable<>();
             table.put("Player1", this);
             table.put("Player2", null);
             Games.put(game_key, table);
@@ -136,7 +137,7 @@ public class Connect4Server extends Thread {
                 out = new PrintStream(sock.getOutputStream());
                 String line = in.readLine();
                 String[] parts = line.split(",");
-                if (parts[0] == "Authenticate") {
+                if (parts[0].equals("Authenticate")) {
                     game_mode = Integer.parseInt(parts[1]);
                     name = parts[2];
                     username = parts[3];
