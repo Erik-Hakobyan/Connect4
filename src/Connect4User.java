@@ -128,17 +128,35 @@ public class Connect4User {
         statusUpdatesTextArea.setText(error);
     }
 
-    public static void ConnectServer(int RequestType, String name, String username, String game_id, String server_ip) {
+    public void ConnectServer(int RequestType, String name, String username, String game_id, String server_ip) {
         String[] parts = server_ip.split(":");
         String ip = parts[0];
         String port = parts[1];
+        String connect_message = "Authenticate" + ":" + name + ":" + username + ":" + game_id;
+        String response;
         try {
             Socket socket = new Socket(ip, Integer.parseInt(port));
             BufferedReader in_stream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintWriter out_stream = new PrintWriter(socket.getOutputStream(), true);
+            out_stream.println(connect_message);
+            response = in_stream.readLine();
+            if (response != "SUCCESS") {
+                if (response == "Error 100") {
+                    addError("Error 100: 2 Users Already In Game. Spectate Instead");
+                } else if (response == "Error 200") {
+                    addError("Error 200: Game Key is invalid");
+                }
+            } else {
+                startGame();
+            }
+
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            addError("Socket Failure. Check IP:Port.");
         }
+
+    }
+
+    private void startGame() {
 
     }
 

@@ -49,7 +49,7 @@ public class Connect4Server extends Thread {
         private BufferedReader in;
         private PrintStream out;
         private int game_mode = 0;
-        public String name, username, game_id;
+        public String name, username;
         private String game_key;
         Socket sock;
 
@@ -73,7 +73,7 @@ public class Connect4Server extends Thread {
             if (Games.contains(game_key)) {
                 ClientConnection[] array = Games.get(game_key);
                 if (array[0] != null && array[1] != null) {
-                    out.println("Error 100: 2 Users Already In Game. Spectate Instead");
+                    out.println("Error 100");
                 } else {
                     array[1] = this;
                     Games.put(game_key, array);
@@ -87,6 +87,10 @@ public class Connect4Server extends Thread {
         }
 
         private void spectate() {
+            if (Games.containsKey(game_key)) {
+                //continue writing code from here
+                //replace array wth hashtable for users so that it's easier to remove users
+            }
         }
 
         private void relay(String message) {
@@ -133,8 +137,7 @@ public class Connect4Server extends Thread {
                     game_mode = Integer.parseInt(parts[1]);
                     name = parts[2];
                     username = parts[3];
-                    game_id = parts[4];
-                    game_key = parts[5];
+                    game_key = parts[4];
                     return true;
                 }
 
