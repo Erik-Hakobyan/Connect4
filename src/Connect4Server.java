@@ -13,7 +13,7 @@ import java.util.Hashtable;
 public class Connect4Server extends Thread {
     private int port;
     private boolean live;
-    Hashtable<String, ClientConnection[]> Games = new Hashtable<>();
+    Hashtable<String, Hashtable<String, ClientConnection>> Games = new Hashtable<>();
 
     public Connect4Server(int port_config) {
         port = port_config;
@@ -62,34 +62,37 @@ public class Connect4Server extends Thread {
 
         private void newGame() {
             game_key = generateKey();
-            ClientConnection[] client_array = new ClientConnection[2];
-            client_array[0] = this;
-            Games.put(game_key, client_array);
+            Hashtable<String, ClientConnection> table = new Hashtable<>;
+            table.put("Player1", this);
+            table.put("Player2", null);
+            Games.put(game_key, table);
             out.println("GK:" + game_key);
-
         }
 
         private void joinGame() {
             if (Games.contains(game_key)) {
-                ClientConnection[] array = Games.get(game_key);
-                if (array[0] != null && array[1] != null) {
+                Hashtable<String, ClientConnection> table = Games.get(game_key);
+                if (table.get("Player1") != null && table.get("Player2") != null) {
                     out.println("Error 100");
-                } else {
-                    array[1] = this;
-                    Games.put(game_key, array);
-                    for (ClientConnection cc : array) {
-                        cc.relay(name + "(" + username + ")" + "has entered the game!");
+                } else if (table.get("Player1") == null) {
+                    table.put("Player1", this);
+                } else if (table.get("Player2") == null) {
+                    table.put("Player2", this);
+                }
+                Games.put(game_key, table);
+                for (ClientConnection cc : table.values()) {
+                    cc.relay(name + "(" + username + ")" + "has entered the game!");
 
-                    }
                 }
             }
+            }
 
-        }
 
         private void spectate() {
             if (Games.containsKey(game_key)) {
-                //continue writing code from here
-                //replace array wth hashtable for users so that it's easier to remove users
+                out.println("SUCCESS");
+            } else {
+                out.println("ERROR 200");
             }
         }
 
