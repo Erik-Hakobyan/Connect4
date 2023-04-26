@@ -113,7 +113,19 @@ public class Connect4User {
         username = username_text_field.getText();
         game_id = game_id_text_field.getText();
         server_ip = server_ip_text_field.getText();
-        ConnectServer(RequestType, name, username, game_id, server_ip);
+        if (name.isEmpty()) {
+            addError("Name is Missing");
+        } else if (username.isEmpty()) {
+            addError("Username is Missing");
+        } else if (server_ip.isEmpty()) {
+            addError("Server IP is Missing");
+        } else {
+            ConnectServer(RequestType, name, username, game_id, server_ip);
+        }
+    }
+
+    private void addError(String error) {
+        statusUpdatesTextArea.setText(error);
     }
 
     public static void ConnectServer(int RequestType, String name, String username, String game_id, String server_ip) {
