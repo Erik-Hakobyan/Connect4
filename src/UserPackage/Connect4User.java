@@ -10,10 +10,11 @@ import java.net.Socket;
 
 
 public class Connect4User {
-    private String name, username, game_id, server_ip;
-    private JTextField name_text_field, username_text_field, game_id_text_field, server_ip_text_field;
-    private BufferedReader in_stream;
-    private PrintWriter out_Stream;
+
+    static InitialGUI initGUI;
+    static GameGUI gameGUI;
+    static PrintWriter out_stream;
+    static BufferedReader in_stream;
 
     public Connect4User() {
         initGUI = new InitialGUI();
