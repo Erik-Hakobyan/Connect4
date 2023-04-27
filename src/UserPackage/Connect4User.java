@@ -19,6 +19,15 @@ public class Connect4User {
         initGUI = new InitialGUI();
     }
 
+    public static boolean relay(String message) {
+        if (out_stream.checkError()) {
+            return false;
+        } else {
+            out_stream.println(message);
+            return true;
+        }
+    }
+
     public static void ConnectServer(int RequestType, String name, String username, String game_id, String server_ip) {
         String[] parts = server_ip.split(":");
         String ip = parts[0];

@@ -7,13 +7,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
 
-class GameGUI {
+public class GameGUI {
     private static final int ROWS = 6;
     private static final int COLUMNS = 7;
     private JFrame frame;
     private JPanel mainPanel;
     private JPanel boardPanel;
     private JPanel controlPanel;
+    private JPanel statusPanel;
     private JPanel chatPanel;
     private CircleButton[][] board;
     private JButton drawButton;
@@ -23,13 +24,15 @@ class GameGUI {
     private JTextArea chatArea;
     private JTextField chatInput;
     private JButton sendButton;
+    private JTextArea statusUpdatesTextArea;
+    private String status;
 
     public GameGUI() {
         create();
     }
 
     private void create() {
-
+        status = "Waiting";
         frame = new JFrame("Connect 4");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1000, 600);
@@ -40,8 +43,8 @@ class GameGUI {
         createControlPanel();
         createChatPanel();
 
-        mainPanel.add(controlPanel, BorderLayout.SOUTH);
         mainPanel.add(boardPanel, BorderLayout.CENTER);
+        mainPanel.add(controlPanel, BorderLayout.NORTH);
         mainPanel.add(chatPanel, BorderLayout.EAST);
 
         frame.add(mainPanel);
@@ -66,8 +69,8 @@ class GameGUI {
     }
 
     private void createControlPanel() {
-        int hGap = 10; // Horizontal gap between components
-        int vGap = 10; // Vertical gap between components
+        int hGap = 10;
+        int vGap = 10;
         controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, hGap, vGap));
 
         Dimension buttonSize = new Dimension(120, 30); // Custom button size
@@ -75,11 +78,13 @@ class GameGUI {
         drawButton = new JButton("Offer Draw");
         drawButton.setPreferredSize(buttonSize);
         drawButton.addActionListener(e -> {
+            Connect4User.relay("COMMAND:DRAW");
         });
 
         resignButton = new JButton("Resign");
         resignButton.setPreferredSize(buttonSize);
         resignButton.addActionListener(e -> {
+            Connect4User.relay("COMMAND:RESIGN");
         });
 
         statsButton = new JButton("My Stats");
@@ -94,8 +99,8 @@ class GameGUI {
         controlPanel.add(newGameButton);
         controlPanel.add(new JLabel("Game Status:"));
 
-        JTextArea statusUpdatesTextArea = new JTextArea();
-        statusUpdatesTextArea.append("Waiting");
+        statusUpdatesTextArea = new JTextArea();
+        statusUpdatesTextArea.append(status);
         controlPanel.add(statusUpdatesTextArea);
     }
 
@@ -109,7 +114,7 @@ class GameGUI {
 
         JScrollPane chatScrollPane = new JScrollPane(chatArea);
         chatScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        chatScrollPane.setPreferredSize(new Dimension(300, 450));
+        chatScrollPane.setPreferredSize(new Dimension(300, frame.getHeight()));
 
         JPanel chatInputPanel = new JPanel(new BorderLayout());
         chatInput = new JTextField();
@@ -117,7 +122,7 @@ class GameGUI {
         sendButton.addActionListener(e -> {
             String message = chatInput.getText().trim();
             if (!message.isEmpty()) {
-                // Implement logic for sending the chat message
+                Connect4User.relay("CHAT:" + message);
                 chatInput.setText("");
             }
         });
@@ -128,7 +133,6 @@ class GameGUI {
         chatPanel.add(chatScrollPane, BorderLayout.CENTER);
         chatPanel.add(chatInputPanel, BorderLayout.SOUTH);
     }
-
 
     private CircleButton createCircleButton() {
         CircleButton button = new CircleButton();
