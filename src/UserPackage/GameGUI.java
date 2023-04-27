@@ -78,20 +78,25 @@ public class GameGUI {
         drawButton = new JButton("Offer Draw");
         drawButton.setPreferredSize(buttonSize);
         drawButton.addActionListener(e -> {
-            Connect4User.relay("COMMAND:DRAW");
+            relayMessage("COMMAND:DRAW");
         });
 
         resignButton = new JButton("Resign");
         resignButton.setPreferredSize(buttonSize);
         resignButton.addActionListener(e -> {
-            Connect4User.relay("COMMAND:RESIGN");
+            relayMessage("COMMAND:RESIGN");
         });
 
         statsButton = new JButton("My Stats");
         statsButton.setPreferredSize(buttonSize);
+        statsButton.addActionListener(e ->
+                relayMessage("COMMAND:STATS"));
 
         newGameButton = new JButton("New Game");
         newGameButton.setPreferredSize(buttonSize);
+        newGameButton.addActionListener(e -> {
+            relayMessage("COMMAND:NEW");
+        });
 
         controlPanel.add(statsButton);
         controlPanel.add(drawButton);
@@ -102,6 +107,12 @@ public class GameGUI {
         statusUpdatesTextArea = new JTextArea();
         statusUpdatesTextArea.append(status);
         controlPanel.add(statusUpdatesTextArea);
+    }
+
+    private void relayMessage(String message) {
+        if (!Connect4User.relay(message)) {
+            statusUpdatesTextArea.append(("Unable to Relay Message"));
+        }
     }
 
     private void createChatPanel() {

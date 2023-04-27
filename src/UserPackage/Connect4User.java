@@ -11,10 +11,10 @@ import java.net.Socket;
 
 public class Connect4User {
 
-    static InitialGUI initGUI;
-    static GameGUI gameGUI;
-    static PrintWriter out_stream;
-    static BufferedReader in_stream;
+    private static InitialGUI initGUI;
+    private static GameGUI gameGUI;
+    private static PrintWriter out_stream;
+    private static BufferedReader in_stream;
 
     public Connect4User() {
         initGUI = new InitialGUI();
