@@ -1,7 +1,7 @@
+import UserPackage.Connect4User;
 import com.formdev.flatlaf.FlatDarculaLaf;
 
 import javax.swing.*;
-
 public class Main {
     public static void main(String[] args) {
         try {
