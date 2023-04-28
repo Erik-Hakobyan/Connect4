@@ -92,7 +92,7 @@ public class GameGUI {
         int vGap = 10;
         controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, hGap, vGap));
 
-        Dimension buttonSize = new Dimension(120, 30); // Custom button size
+        Dimension buttonSize = new Dimension(120, 30);
 
         drawButton = new JButton("Offer Draw");
         drawButton.setPreferredSize(buttonSize);

@@ -30,12 +30,9 @@ public class Connect4Server extends Thread {
 
     private void relayAll(String key, String message) {
         Map<String, ClientConnection> aGame = Games.get(key);
-        System.out.println("relayALl called in Server");
         if (aGame != null) {
             for (ClientConnection connection : aGame.values()) {
-                System.out.println("Sending");
                 if (connection != null) {
-                    System.out.println("Sending check 2");
                     connection.relay(message);
                 }
             }
@@ -192,7 +189,17 @@ public class Connect4Server extends Thread {
                     case "CHAT":
                         String mess = "CHAT:" + name + "(" + username + ")" + parts[1];
                         Server.relayAll(game_key, mess);
-
+                    case "COMMAND":
+                        switch (parts[1]) {
+                            case "STATS":
+                                statsCommand();
+                            case "NEW":
+                                newCommand();
+                            case "RESIGN":
+                                resignCommand();
+                            case "DRAW":
+                                drawCommand();
+                        }
                 }
 
             }
@@ -211,17 +218,25 @@ public class Connect4Server extends Thread {
         }
 
         private void drawCommand() {
+            String message = "CHAT:" + name + "Has Offered A Draw!";
+            relayAll(game_key, message);
         }
 
         private void resignCommand() {
-
+            String message = "CHAT:" + name + "Has Resigned!";
+            relayAll(game_key, message);
         }
 
         private void statsCommand() {
+            //PULL THESE STATS FROM DATA BASE
+            String message = "CHAT:" + "My Stats";
+            relayAll(game_key, message);
 
         }
 
         private void newCommand() {
+            String message = "CHAT:" + name + "has left the game!";
+            relayAll(game_key, message);
         }
 
         public static void main(String[] args) {
