@@ -1,5 +1,7 @@
 package UserPackage;
 
+import com.formdev.flatlaf.intellijthemes.FlatCyanLightIJTheme;
+
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicButtonUI;
 import java.awt.*;
@@ -10,6 +12,16 @@ import java.awt.geom.Ellipse2D;
 public class GameGUI {
     private static final int ROWS = 6;
     private static final int COLUMNS = 7;
+    private static final int[][] default_board = {
+            {0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0},
+            {0, 0, 0, 0, 0, 0, 0}
+    };
+    private int[][] current_board;
+    private int move_counter;
     private JFrame frame;
     private JPanel mainPanel;
     private JPanel boardPanel;
@@ -26,8 +38,15 @@ public class GameGUI {
     private JButton sendButton;
     private JTextArea statusUpdatesTextArea;
     private String status;
+    private Connect4User user;
 
-    public GameGUI() {
+    public GameGUI(Connect4User u) {
+        user = u;
+        try {
+            UIManager.setLookAndFeel(new FlatCyanLightIJTheme());
+        } catch (UnsupportedLookAndFeelException e) {
+            throw new RuntimeException(e);
+        }
         create();
     }
 
@@ -52,7 +71,7 @@ public class GameGUI {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new GameGUI());
+        SwingUtilities.invokeLater(() -> new GameGUI(null));
     }
 
     private void createBoardPanel() {
@@ -110,7 +129,7 @@ public class GameGUI {
     }
 
     private void relayMessage(String message) {
-        if (!Connect4User.relay(message)) {
+        if (!user.relay(message)) {
             statusUpdatesTextArea.append(("Unable to Relay Message"));
         }
     }
@@ -133,7 +152,7 @@ public class GameGUI {
         sendButton.addActionListener(e -> {
             String message = chatInput.getText().trim();
             if (!message.isEmpty()) {
-                Connect4User.relay("CHAT:" + message);
+                user.relay("CHAT" + ":" + message);
                 chatInput.setText("");
             }
         });
@@ -143,6 +162,10 @@ public class GameGUI {
 
         chatPanel.add(chatScrollPane, BorderLayout.CENTER);
         chatPanel.add(chatInputPanel, BorderLayout.SOUTH);
+    }
+
+    public void addChat(String message) {
+        chatArea.append(message + "\n");
     }
 
     private CircleButton createCircleButton() {

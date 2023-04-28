@@ -10,6 +10,7 @@ class InitialGUI {
     private CustomJTextField name_text_field, username_text_field, game_id_text_field, server_ip_text_field;
     private JTextArea statusUpdatesTextArea;
     private Connect4User Connect4UserRef;
+    private JFrame frame;
 
     public InitialGUI(Connect4User user) {
         Connect4UserRef = user;
@@ -18,7 +19,7 @@ class InitialGUI {
 
     public void initialize() {
         int rightPadding = 20;
-        JFrame frame = new JFrame("Welcome to Connect4");
+        frame = new JFrame("Welcome to Connect4");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(500, 500);
         frame.setLayout(new BorderLayout());
@@ -80,24 +81,28 @@ class InitialGUI {
         newGameButton.addActionListener((new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                initialCapture(1);
+                initialCapture("1");
             }
         }));
         joinGameButton.addActionListener((new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                initialCapture(2);
+                initialCapture("2");
             }
         }));
         spectateGameButton.addActionListener((new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                initialCapture(3);
+                initialCapture("3");
             }
         }));
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
+    }
+
+    public void changeVisibility() {
+        frame.setVisible(false);
     }
 
     public class CustomJTextField extends JTextField {
@@ -116,7 +121,7 @@ class InitialGUI {
         }
     }
 
-    public void initialCapture(int RequestType) {
+    public void initialCapture(String RequestType) {
         name = name_text_field.getText();
         username = username_text_field.getText();
         game_id = game_id_text_field.getText();

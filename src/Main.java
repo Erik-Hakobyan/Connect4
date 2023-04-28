@@ -1,8 +1,8 @@
 import UserPackage.Connect4User;
-import UserPackage.GameGUI;
 import com.formdev.flatlaf.FlatDarculaLaf;
 
 import javax.swing.*;
+
 public class Main {
     public static void main(String[] args) {
         try {
@@ -13,6 +13,6 @@ public class Main {
         int port = 1234;
         new Connect4Server(port);
         new Connect4User();
-        new GameGUI();
+
     }
 }

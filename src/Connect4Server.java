@@ -8,13 +8,15 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.SecureRandom;
-import java.util.Hashtable;
-
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Connect4Server extends Thread {
     private int port;
     private boolean live;
-    Hashtable<String, Hashtable<String, ClientConnection>> Games = new Hashtable<>();
+    private Map<String, Map<String, ClientConnection>> Games_Map = new HashMap<>();
+    private Map<String, Map<String, ClientConnection>> Games = Collections.synchronizedMap(Games_Map);
 
     public Connect4Server(int port_config) {
         port = port_config;
@@ -26,6 +28,21 @@ public class Connect4Server extends Thread {
         live = false;
     }
 
+    private void relayAll(String key, String message) {
+        Map<String, ClientConnection> aGame = Games.get(key);
+        System.out.println("relayALl called in Server");
+        if (aGame != null) {
+            for (ClientConnection connection : aGame.values()) {
+                System.out.println("Sending");
+                if (connection != null) {
+                    System.out.println("Sending check 2");
+                    connection.relay(message);
+                }
+            }
+        }
+    }
+
+
     @Override
     public void run() {
         try {
@@ -34,7 +51,7 @@ public class Connect4Server extends Thread {
             ServerSocket sock = new ServerSocket(port);
             while (live) {
                 Socket socket = sock.accept();
-                ClientConnection con = new ClientConnection(socket);
+                ClientConnection con = new ClientConnection(socket, this);
             }
 
         } catch (UnknownHostException e) {
@@ -49,42 +66,42 @@ public class Connect4Server extends Thread {
         private static final String SYMBOLS = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
         private BufferedReader in;
         private PrintStream out;
-        private int game_mode = 0;
+        private int requestType;
         public String name, username;
         private String game_key;
+        private Connect4Server Server;
         Socket sock;
 
-        public ClientConnection(Socket socket) {
+        public ClientConnection(Socket socket, Connect4Server server) {
             sock = socket;
-            if (verifyConnection()) {
-                initializeMode();
-            }
+            Server = server;
+            verifyConnection();
         }
 
         private void newGame() {
             game_key = generateKey();
-            Hashtable<String, ClientConnection> table = new Hashtable<>();
-            table.put("Player1", this);
-            table.put("Player2", null);
-            Games.put(game_key, table);
+            Map<String, ClientConnection> map_unsy = new HashMap<>();
+            Map<String, ClientConnection> map = Collections.synchronizedMap(map_unsy);
+            map.put("Player1", this);
+            map.put("Player2", null);
+            Games.put(game_key, map);
             out.println("GK:" + game_key);
         }
 
         private void joinGame() {
-            if (Games.contains(game_key)) {
-                Hashtable<String, ClientConnection> table = Games.get(game_key);
-                if (table.get("Player1") != null && table.get("Player2") != null) {
+            if (Games.containsKey(game_key)) {
+                Map<String, ClientConnection> map_unsync = Games.get(game_key);
+                Map<String, ClientConnection> map = Collections.synchronizedMap(map_unsync);
+                if (map.get("Player1") != null && map.get("Player2") != null) {
                     out.println("Error 100");
-                } else if (table.get("Player1") == null) {
-                    table.put("Player1", this);
-                } else if (table.get("Player2") == null) {
-                    table.put("Player2", this);
+                } else if (map.get("Player1") == null) {
+                    map.put("Player1", this);
+                } else if (map.get("Player2") == null) {
+                    map.put("Player2", this);
                 }
-                Games.put(game_key, table);
-                for (ClientConnection cc : table.values()) {
-                    cc.relay(name + "(" + username + ")" + "has entered the game!");
-
-                }
+                Games.put(game_key, map);
+                String enter = "CHAT:" + name + " (" + username + ") " + "has entered the game!";
+                Server.relayAll(game_key, enter);
             }
             }
 
@@ -115,7 +132,7 @@ public class Connect4Server extends Thread {
         }
 
         private void initializeMode() {
-            switch (game_mode) {
+            switch (requestType) {
                 case 1:
                     newGame();
                     break;
@@ -131,30 +148,80 @@ public class Connect4Server extends Thread {
         }
 
 
-        private boolean verifyConnection() {
+        private void verifyConnection() {
             try {
                 in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
                 out = new PrintStream(sock.getOutputStream());
                 String line = in.readLine();
-                String[] parts = line.split(",");
-                if (parts[0].equals("Authenticate")) {
-                    game_mode = Integer.parseInt(parts[1]);
-                    name = parts[2];
-                    username = parts[3];
-                    game_key = parts[4];
-                    return true;
-                }
+                processRequest(line);
 
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            return false;
+
 
         }
 
+        @Override
+        public void run() {
+            initializeMode();
+            String userRequest;
+            while (true) {
+                try {
+                    if ((userRequest = in.readLine()) != null) {
+                        processRequest(userRequest);
+                        Thread.sleep(25);
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
 
-        class DatabaseManager {
+            }
+        }
 
+        private void processRequest(String request) {
+            String[] parts;
+            if (!request.isEmpty()) {
+                parts = request.split(":");
+                System.out.println("REQUEST REC: " + request);
+                switch (parts[0]) {
+                    case "Authenticate":
+                        Authenticate(parts);
+                    case "CHAT":
+                        String mess = "CHAT:" + name + "(" + username + ")" + parts[1];
+                        Server.relayAll(game_key, mess);
+
+                }
+
+            }
+        }
+
+        private void Authenticate(String[] parts) {
+            System.out.println("Authenticating");
+            if (parts[0].equals("Authenticate")) {
+                requestType = Integer.parseInt(parts[1]);
+                name = parts[2];
+                username = parts[3];
+                game_key = parts[4];
+                out.println("SUCCESS");
+                start();
+            }
+        }
+
+        private void drawCommand() {
+        }
+
+        private void resignCommand() {
+
+        }
+
+        private void statsCommand() {
+
+        }
+
+        private void newCommand() {
         }
 
         public static void main(String[] args) {
@@ -167,4 +234,5 @@ public class Connect4Server extends Thread {
             });
         }
     }
+
 }

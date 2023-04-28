@@ -4,12 +4,13 @@ import com.formdev.flatlaf.FlatDarculaLaf;
 
 import javax.swing.*;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
 
-public class Connect4User {
+public class Connect4User extends Thread {
 
     private static InitialGUI initGUI;
     private static GameGUI gameGUI;
@@ -17,12 +18,12 @@ public class Connect4User {
     private static BufferedReader in_stream;
 
     public Connect4User() {
-        initGUI = new InitialGUI(this);
+        start();
 
     }
 
-    public static boolean relay(String message) {
-        if (out_stream.checkError()) {
+    public boolean relay(String message) {
+        if (out_stream == null) {
             return false;
         } else {
             out_stream.println(message);
@@ -30,32 +31,74 @@ public class Connect4User {
         }
     }
 
-    public void ConnectServer(int RequestType, String name, String username, String game_id, String server_ip) {
+    public void ConnectServer(String RequestType, String name, String username, String game_id, String server_ip) {
         String[] parts = server_ip.split(":");
         String ip = parts[0];
         String port = parts[1];
-        String connect_message = "Authenticate" + ":" + name + ":" + username + ":" + game_id;
+        String connect_message = "Authenticate" + ":" + RequestType + ":" + name + ":" + username + ":" + game_id;
         String response;
+        System.out.println("ConnectServer Called");
         try {
             Socket socket = new Socket(ip, Integer.parseInt(port));
-            BufferedReader in_stream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            PrintWriter out_stream = new PrintWriter(socket.getOutputStream(), true);
+            in_stream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out_stream = new PrintWriter(socket.getOutputStream(), true);
             out_stream.println(connect_message);
             response = in_stream.readLine();
-            if (response != "SUCCESS") {
+            System.out.println(("response received: " + response));
+            if (!response.contains("SUCCESS")) {
                 if (response == "Error 100") {
                     initGUI.addError("Error 100: 2 Users Already In Game. Spectate Instead");
                 } else if (response == "Error 200") {
                     initGUI.addError("Error 200: Game Key is invalid");
                 }
             } else {
-                gameGUI = new GameGUI();
+                initGUI.changeVisibility();
+                initGUI = null;
+                gameGUI = new GameGUI(this);
             }
 
         } catch (Exception e) {
             initGUI.addError("Socket Failure. Check IP:Port.");
         }
 
+    }
+
+    @Override
+    public void run() {
+        initGUI = new InitialGUI(this);
+        String response;
+        while (initGUI != null) {
+            try {
+                sleep(1);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        while (true) {
+            System.out.println("test");
+            try {
+                if ((response = in_stream.readLine()) != null) {
+                    processRequest(response);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+    }
+
+
+    private void processRequest(String response) {
+        String[] parts;
+        if (!response.isEmpty()) {
+            parts = response.split(":");
+            switch (parts[0]) {
+                case "CHAT":
+                    gameGUI.addChat(parts[1]);
+
+            }
+
+        }
     }
 
     public static void main(String[] args) {
