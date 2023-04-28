@@ -9,8 +9,10 @@ class InitialGUI {
     private String name, username, game_id, server_ip;
     private CustomJTextField name_text_field, username_text_field, game_id_text_field, server_ip_text_field;
     private JTextArea statusUpdatesTextArea;
+    private Connect4User Connect4UserRef;
 
-    public InitialGUI() {
+    public InitialGUI(Connect4User user) {
+        Connect4UserRef = user;
         initialize();
     }
 
@@ -93,8 +95,7 @@ class InitialGUI {
                 initialCapture(3);
             }
         }));
-        // Display the window
-        frame.setLocationRelativeTo(null); // Center the window on the screen
+        frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
     }
@@ -127,7 +128,7 @@ class InitialGUI {
         } else if (server_ip.isEmpty()) {
             addError("Server IP is Missing");
         } else {
-            Connect4User.ConnectServer(RequestType, name, username, game_id, server_ip);
+            Connect4UserRef.ConnectServer(RequestType, name, username, game_id, server_ip);
         }
     }
 

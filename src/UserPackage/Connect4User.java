@@ -17,7 +17,8 @@ public class Connect4User {
     private static BufferedReader in_stream;
 
     public Connect4User() {
-        initGUI = new InitialGUI();
+        initGUI = new InitialGUI(this);
+
     }
 
     public static boolean relay(String message) {
@@ -29,7 +30,7 @@ public class Connect4User {
         }
     }
 
-    public static void ConnectServer(int RequestType, String name, String username, String game_id, String server_ip) {
+    public void ConnectServer(int RequestType, String name, String username, String game_id, String server_ip) {
         String[] parts = server_ip.split(":");
         String ip = parts[0];
         String port = parts[1];
