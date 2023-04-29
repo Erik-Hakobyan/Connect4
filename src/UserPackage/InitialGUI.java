@@ -138,6 +138,9 @@ class InitialGUI extends Thread {
         } else if (server_ip.isEmpty()) {
             addError("Server IP is Missing");
         } else {
+            if (game_id.isEmpty()) {
+                game_id = "NULL";
+            }
             Connect4UserRef.ConnectServer(RequestType, name, username, game_id, server_ip);
         }
     }

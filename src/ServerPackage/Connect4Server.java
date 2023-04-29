@@ -250,7 +250,7 @@ public class Connect4Server extends Thread {
 
         private void statsCommand() {
             //PULL THESE STATS FROM DATA BASE
-            String message = "CHAT:" + "My Stats";
+            String message = "CHAT:" + name + " Stats - ";
             relayAll(game_key, message);
 
         }

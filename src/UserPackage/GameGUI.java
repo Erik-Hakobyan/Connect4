@@ -87,6 +87,36 @@ public class GameGUI {
         }
     }
 
+    public void gameResult(String result) {
+        //PROCESS THIS
+        //WINNER/LOSER - Create a gui or something or post the results. freeze the board, etc.
+    }
+
+    public void turn() {
+        isMyTurn = true;
+    }
+
+    public void updateStatus(String newStatus) {
+        status = newStatus;
+    }
+
+    public void newMove(String new_move) {
+        if (new_move == null || new_move.length() != 2) {
+            addChat("SYSTEM: AN ERROR OCCURRED");
+        }
+
+        int row = Character.getNumericValue(new_move.charAt(0));
+        int column = Character.getNumericValue(new_move.charAt(1));
+
+        if (row >= 0 && row < buttonBoard.length && column >= 0 && column < buttonBoard[0].length) {
+            Color playerColor = !isPlayerOne ? Color.RED : Color.YELLOW;
+            buttonBoard[row][column].setBackground(playerColor);
+        } else {
+            addChat("SYSTEM: AN ERROR OCCURRED");
+        }
+    }
+
+
     private void createControlPanel() {
         int hGap = 10;
         int vGap = 10;

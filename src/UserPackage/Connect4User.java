@@ -37,14 +37,11 @@ public class Connect4User extends Thread {
         String port = parts[1];
         String connect_message = "Authenticate" + ":" + RequestType + ":" + name + ":" + username + ":" + game_id;
         String response;
-        System.out.println("ConnectServer Called");
         try {
             Socket socket = new Socket(ip, Integer.parseInt(port));
             in_stream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out_stream = new PrintWriter(socket.getOutputStream(), true);
-            out_stream.println(connect_message);
             response = in_stream.readLine();
-            System.out.println(("response received: " + response));
             if (!response.contains("SUCCESS")) {
                 if (response == "Error 100") {
                     initGUI.addError("Error 100: 2 Users Already In Game. Spectate Instead");
