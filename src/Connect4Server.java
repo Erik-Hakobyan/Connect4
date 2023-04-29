@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Connect4Server extends Thread {
-    private int port;
+    private final int port;
     private boolean live;
     private Map<String, Map<String, ClientConnection>> Games_Map = new HashMap<>();
     private Map<String, Map<String, ClientConnection>> Games = Collections.synchronizedMap(Games_Map);
@@ -48,7 +48,7 @@ public class Connect4Server extends Thread {
             ServerSocket sock = new ServerSocket(port);
             while (live) {
                 Socket socket = sock.accept();
-                ClientConnection con = new ClientConnection(socket, this);
+                new ClientConnection(socket, this);
             }
 
         } catch (UnknownHostException e) {
@@ -66,7 +66,7 @@ public class Connect4Server extends Thread {
         private int requestType;
         public String name, username;
         private String game_key;
-        private Connect4Server Server;
+        private final Connect4Server Server;
         Socket sock;
 
         public ClientConnection(Socket socket, Connect4Server server) {
@@ -185,27 +185,34 @@ public class Connect4Server extends Thread {
                 System.out.println("REQUEST REC: " + request);
                 switch (parts[0]) {
                     case "Authenticate":
-                        Authenticate(parts);
+                        authenticate(parts);
+                        break;
                     case "CHAT":
-                        String mess = "CHAT:" + name + "(" + username + ")" + parts[1];
+                        String mess = "CHAT:" + name + "(" + username + "): " + parts[1];
                         Server.relayAll(game_key, mess);
+                        break;
                     case "COMMAND":
                         switch (parts[1]) {
                             case "STATS":
                                 statsCommand();
+                                break;
                             case "NEW":
                                 newCommand();
+                                break;
                             case "RESIGN":
                                 resignCommand();
+                                break;
                             case "DRAW":
                                 drawCommand();
+                                break;
                         }
+                        break;
                 }
-
             }
         }
 
-        private void Authenticate(String[] parts) {
+
+        private void authenticate(String[] parts) {
             System.out.println("Authenticating");
             if (parts[0].equals("Authenticate")) {
                 requestType = Integer.parseInt(parts[1]);
