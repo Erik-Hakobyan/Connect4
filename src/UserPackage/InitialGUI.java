@@ -5,7 +5,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-class InitialGUI {
+class InitialGUI extends Thread {
     private String name, username, game_id, server_ip;
     private CustomJTextField name_text_field, username_text_field, game_id_text_field, server_ip_text_field;
     private JTextArea statusUpdatesTextArea;
@@ -14,6 +14,11 @@ class InitialGUI {
 
     public InitialGUI(Connect4User user) {
         Connect4UserRef = user;
+        start();
+    }
+
+    @Override
+    public void run() {
         initialize();
     }
 

@@ -52,9 +52,10 @@ public class Connect4User extends Thread {
                     initGUI.addError("Error 200: Game Key is invalid");
                 }
             } else {
+                gameGUI = new GameGUI(this);
                 initGUI.changeVisibility();
                 initGUI = null;
-                gameGUI = new GameGUI(this);
+
             }
 
         } catch (Exception e) {
@@ -69,37 +70,49 @@ public class Connect4User extends Thread {
         String response;
         while (initGUI != null) {
             try {
-                sleep(1);
+                sleep(50);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
         while (true) {
-            System.out.println("test");
             try {
                 if ((response = in_stream.readLine()) != null) {
                     processRequest(response);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
 
         }
     }
 
 
-    private void processRequest(String response) {
-        String[] parts;
-        if (!response.isEmpty()) {
-            parts = response.split(":");
-            switch (parts[0]) {
-                case "CHAT":
-                    gameGUI.addChat(parts[1]);
+    private void processRequest(String response) throws InterruptedException {
+        if (response != null && !response.isEmpty()) {
+            String[] parts = response.split(":", 2);
+            if (parts.length >= 2) {
+                String command = parts[0];
+                String content = parts[1];
 
+                switch (command) {
+                    case "CHAT":
+                        gameGUI.addChat(content);
+                        break;
+                    case "GK":
+                        gameGUI.addChat("Your Game Key: " + content);
+                    default:
+                        System.out.println("Unknown command received: " + command);
+                        break;
+                }
+            } else {
+                System.out.println("Invalid response format: " + response);
             }
-
         }
     }
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {

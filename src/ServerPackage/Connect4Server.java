@@ -1,3 +1,7 @@
+package ServerPackage;
+
+import com.formdev.flatlaf.FlatDarculaLaf;
+
 import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,10 +11,10 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 public class Connect4Server extends Thread {
     private final int port;
@@ -19,6 +23,11 @@ public class Connect4Server extends Thread {
     private Map<String, Map<String, ClientConnection>> Games = Collections.synchronizedMap(Games_Map);
 
     public Connect4Server(int port_config) {
+        try {
+            UIManager.setLookAndFeel(new FlatDarculaLaf());
+        } catch (UnsupportedLookAndFeelException e) {
+            throw new RuntimeException(e);
+        }
         port = port_config;
         live = true;
         start();
@@ -100,7 +109,7 @@ public class Connect4Server extends Thread {
                 String enter = "CHAT:" + name + " (" + username + ") " + "has entered the game!";
                 Server.relayAll(game_key, enter);
             }
-            }
+        }
 
 
         private void spectate() {
@@ -116,17 +125,22 @@ public class Connect4Server extends Thread {
         }
 
         private static String generateKey() {
-            SecureRandom random = new SecureRandom();
-            StringBuilder sb = new StringBuilder(8);
+            Random random = new Random();
+            StringBuilder randomStringBuilder = new StringBuilder(8);
 
-            for (int i = 0; i < 8; i++) {
-                int randomIndex = random.nextInt(SYMBOLS.length());
-                char randomChar = SYMBOLS.charAt(randomIndex);
-                sb.append(randomChar);
+            for (int i = 0; i < 4; i++) {
+                char randomLetter = (char) ('A' + random.nextInt(26));
+                randomStringBuilder.append(randomLetter);
             }
-            return sb.toString();
 
+            for (int i = 0; i < 4; i++) {
+                int randomNumber = random.nextInt(10);
+                randomStringBuilder.append(randomNumber);
+            }
+
+            return randomStringBuilder.toString();
         }
+
 
         private void initializeMode() {
             switch (requestType) {
