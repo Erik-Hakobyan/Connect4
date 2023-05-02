@@ -100,6 +100,22 @@ public class Connect4User extends Thread {
                         break;
                     case "GK":
                         gameGUI.addChat("Your Game Key: " + content);
+                        break;
+                    case "PLAYER":
+                        gameGUI.setPlayer(content == "1");
+                        break;
+                    case "STATUS":
+                        gameGUI.updateStatus(content);
+                        break;
+                    case "MOVE":
+                        gameGUI.newMove(content);
+                        break;
+                    case "TURN":
+                        gameGUI.turn();
+                        break;
+                    case "RESULT":
+                        gameGUI.gameResult(content);
+                        break;
                     default:
                         System.out.println("Unknown command received: " + command);
                         break;

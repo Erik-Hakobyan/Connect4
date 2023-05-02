@@ -69,7 +69,15 @@ public class Connect4Server extends Thread {
     }
 
     class ClientConnection extends Thread {
-        private static final String SYMBOLS = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+        private static final int[][] default_board = {
+                {0, 0, 0, 0, 0, 0, 0},
+                {0, 0, 0, 0, 0, 0, 0},
+                {0, 0, 0, 0, 0, 0, 0},
+                {0, 0, 0, 0, 0, 0, 0},
+                {0, 0, 0, 0, 0, 0, 0},
+                {0, 0, 0, 0, 0, 0, 0}
+        };
+        private int[][] currentBoard;
         private BufferedReader in;
         private PrintStream out;
         private int requestType;
@@ -92,6 +100,7 @@ public class Connect4Server extends Thread {
             map.put("Player2", null);
             Games.put(game_key, map);
             out.println("GK:" + game_key);
+            currentBoard = default_board;
         }
 
         private void joinGame() {
@@ -102,7 +111,9 @@ public class Connect4Server extends Thread {
                     out.println("Error 100");
                 } else if (map.get("Player1") == null) {
                     map.put("Player1", this);
+                    out.println("PLAYER:1");
                 } else if (map.get("Player2") == null) {
+                    out.println("PLAYER:2");
                     map.put("Player2", this);
                 }
                 Games.put(game_key, map);
@@ -205,6 +216,8 @@ public class Connect4Server extends Thread {
                         String mess = "CHAT:" + name + "(" + username + "): " + parts[1];
                         Server.relayAll(game_key, mess);
                         break;
+                    case "MOVE":
+                        validateMove(parts[1]);
                     case "COMMAND":
                         switch (parts[1]) {
                             case "STATS":
@@ -225,6 +238,18 @@ public class Connect4Server extends Thread {
             }
         }
 
+        private void validateMove(String move) {
+
+        }
+
+        private void boardtoJSON() {
+            //SO YOU CAN SAVE THE BOARD IN A DATABASE
+        }
+
+        private void JSONtoBoard() {
+            //reverse previous function
+        }
+
 
         private void authenticate(String[] parts) {
             System.out.println("Authenticating");
@@ -239,12 +264,12 @@ public class Connect4Server extends Thread {
         }
 
         private void drawCommand() {
-            String message = "CHAT:" + name + "Has Offered A Draw!";
+            String message = "CHAT:" + name + " Has Offered A Draw!";
             relayAll(game_key, message);
         }
 
         private void resignCommand() {
-            String message = "CHAT:" + name + "Has Resigned!";
+            String message = "CHAT:" + name + " Has Resigned!";
             relayAll(game_key, message);
         }
 
@@ -256,7 +281,7 @@ public class Connect4Server extends Thread {
         }
 
         private void newCommand() {
-            String message = "CHAT:" + name + "has left the game!";
+            String message = "CHAT:" + name + " has left the game!";
             relayAll(game_key, message);
         }
 

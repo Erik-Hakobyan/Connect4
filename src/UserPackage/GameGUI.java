@@ -12,15 +12,6 @@ import java.awt.geom.Ellipse2D;
 public class GameGUI {
     private static final int ROWS = 6;
     private static final int COLUMNS = 7;
-    private static final int[][] default_board = {
-            {0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0},
-            {0, 0, 0, 0, 0, 0, 0}
-    };
-    private int[][] current_board;
     private int move_counter;
     private JFrame frame;
     private JPanel mainPanel;
@@ -28,7 +19,7 @@ public class GameGUI {
     private JPanel controlPanel;
     private JPanel statusPanel;
     private JPanel chatPanel;
-    private CircleButton[][] board;
+    private CircleButton[][] buttonBoard;
     private JButton drawButton;
     private JButton resignButton;
     private JButton newGameButton;
@@ -39,6 +30,8 @@ public class GameGUI {
     private JTextArea statusUpdatesTextArea;
     private String status;
     private Connect4User user;
+    private boolean isPlayerOne = true;
+    private boolean isMyTurn = false;
 
     public GameGUI(Connect4User u) {
         user = u;
@@ -48,6 +41,10 @@ public class GameGUI {
             throw new RuntimeException(e);
         }
         create();
+    }
+
+    public void setPlayer(Boolean player) {
+        isPlayerOne = player;
     }
 
     private void create() {
@@ -70,19 +67,16 @@ public class GameGUI {
         frame.setVisible(true);
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new GameGUI(null));
-    }
 
     private void createBoardPanel() {
         boardPanel = new JPanel(new GridLayout(ROWS, COLUMNS));
-        board = new CircleButton[ROWS][COLUMNS];
+        buttonBoard = new CircleButton[ROWS][COLUMNS];
 
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLUMNS; col++) {
-                board[row][col] = createCircleButton();
-                board[row][col].addActionListener(new CircleButtonListener(row, col));
-                boardPanel.add(board[row][col]);
+                buttonBoard[row][col] = createCircleButton();
+                buttonBoard[row][col].addActionListener(new CircleButtonListener(row, col));
+                boardPanel.add(buttonBoard[row][col]);
             }
         }
     }
@@ -213,16 +207,27 @@ public class GameGUI {
                 g2.dispose();
             }
         });
+        button.setRolloverEnabled(true);
         return button;
     }
 
-    private class CircleButton extends JButton {
+    public class CircleButton extends JButton {
+        private boolean isDisabled;
+
         public CircleButton() {
             super();
             setBorderPainted(false);
             setContentAreaFilled(false);
-            setFocusPainted(false);
+            setFocusPainted(true);
             setOpaque(false);
+            isDisabled = false;
+            setEnabled(true);
+        }
+
+        @Override
+        public void setEnabled(boolean enabled) {
+            super.setEnabled(enabled);
+            isDisabled = !enabled;
         }
 
         @Override
@@ -234,10 +239,14 @@ public class GameGUI {
 
         @Override
         protected void paintComponent(Graphics g) {
-            if (getModel().isArmed()) {
+            ButtonModel model = getModel();
+
+            if (model.isPressed()) {
+                g.setColor(Color.DARK_GRAY);
+            } else if (model.isRollover()) {
                 g.setColor(Color.LIGHT_GRAY);
             } else {
-                g.setColor(getBackground());
+                g.setColor(isDisabled ? Color.GRAY : getBackground());
             }
             g.fillOval(0, 0, getSize().width - 1, getSize().height - 1);
 
@@ -252,7 +261,7 @@ public class GameGUI {
 
         @Override
         public boolean contains(int x, int y) {
-            return new Ellipse2D.Float(0, 0, getWidth(), getHeight()).contains(x, y);
+            return !isDisabled && new Ellipse2D.Float(0, 0, getWidth(), getHeight()).contains(x, y);
         }
     }
 
@@ -267,8 +276,30 @@ public class GameGUI {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if (isMyTurn) {
+                int targetRow = findAvailableRow(column);
+                if (targetRow != -1) {
+                    Color playerColor = isPlayerOne ? Color.RED : Color.YELLOW;
+                    buttonBoard[targetRow][column].setBackground(playerColor);
+                    relayMessage("MOVE:" + Integer.toString(targetRow) + Integer.toString(column));
+                }
+            } else {
+                chatArea.append("SYSTEM: It's not your turn! \n");
+            }
+        }
 
+        private int findAvailableRow(int column) {
+            for (int row = ROWS - 1; row >= 0; row--) {
+                if (buttonBoard[row][column].getBackground() == Color.WHITE) {
+                    return row;
+                }
+            }
+            return -1;
         }
     }
-}
 
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new GameGUI(null));
+    }
+}
