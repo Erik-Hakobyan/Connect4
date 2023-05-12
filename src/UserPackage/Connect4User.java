@@ -41,6 +41,7 @@ public class Connect4User extends Thread {
             Socket socket = new Socket(ip, Integer.parseInt(port));
             in_stream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out_stream = new PrintWriter(socket.getOutputStream(), true);
+            out_stream.println(connect_message);
             response = in_stream.readLine();
             if (!response.contains("SUCCESS")) {
                 if (response == "Error 100") {
@@ -93,9 +94,11 @@ public class Connect4User extends Thread {
             if (parts.length >= 2) {
                 String command = parts[0];
                 String content = parts[1];
+                System.out.println("Received command: " + command + ", content: " + content);
 
                 switch (command) {
                     case "CHAT":
+                        System.out.println("Updating chat...");
                         gameGUI.addChat(content);
                         break;
                     case "GK":

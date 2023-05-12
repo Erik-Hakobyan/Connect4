@@ -81,6 +81,19 @@ public class GameGUI {
         }
     }
 
+    private void resetBoard() {
+        for (int row = 0; row < ROWS; row++) {
+            for (int col = 0; col < COLUMNS; col++) {
+                if(buttonBoard[row][col] == null){
+                    buttonBoard[row][col] = createCircleButton();
+                }else{
+                    buttonBoard[row][col].setBackground(Color.WHITE);
+                }
+            }
+        }
+        isMyTurn = isPlayerOne;
+    }
+
     public void gameResult(String result) {
         //PROCESS THIS
         //WINNER/LOSER - Create a gui or something or post the results. freeze the board, etc.
@@ -95,6 +108,7 @@ public class GameGUI {
     }
 
     public void newMove(String new_move) {
+        System.out.println("newMove called with move: " + new_move);
         if (new_move == null || new_move.length() != 2) {
             addChat("SYSTEM: AN ERROR OCCURRED");
         }
@@ -139,6 +153,7 @@ public class GameGUI {
         newGameButton.setPreferredSize(buttonSize);
         newGameButton.addActionListener(e -> {
             relayMessage("COMMAND:NEW");
+            resetBoard();
         });
 
         controlPanel.add(statsButton);
@@ -277,11 +292,13 @@ public class GameGUI {
         @Override
         public void actionPerformed(ActionEvent e) {
             if (isMyTurn) {
+                isMyTurn = false;
                 int targetRow = findAvailableRow(column);
                 if (targetRow != -1) {
                     Color playerColor = isPlayerOne ? Color.RED : Color.YELLOW;
                     buttonBoard[targetRow][column].setBackground(playerColor);
                     relayMessage("MOVE:" + Integer.toString(targetRow) + Integer.toString(column));
+                    
                 }
             } else {
                 chatArea.append("SYSTEM: It's not your turn! \n");
