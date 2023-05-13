@@ -119,7 +119,6 @@ public class Connect4Server extends Thread {
 
         private void joinGame() {
             if (Games.containsKey(game_key)) {
-                isMyTurn = false;
                 DBToBoard();
                 Map<String, ClientConnection> map_unsync = Games.get(game_key);
                 Map<String, ClientConnection> map = Collections.synchronizedMap(map_unsync);
@@ -134,6 +133,7 @@ public class Connect4Server extends Thread {
                 }
                 Games.put(game_key, map);
                 String enter = "CHAT:" + name + " (" + username + ") " + "has entered the game!";
+                isMyTurn = true;
                 Server.relayAll(game_key, enter);
             }
         }
@@ -178,6 +178,7 @@ public class Connect4Server extends Thread {
                     break;
                 case 2:
                     joinGame();
+                    
                     break;
                 case 3:
                     spectate();
@@ -270,27 +271,20 @@ public class Connect4Server extends Thread {
                         // Check for a game over condition
                         ConnectFourGame.GameState gameState = game.checkGameState();
                         if (gameState != ConnectFourGame.GameState.IN_PROGRESS) {
-                            if (gameState == ConnectFourGame.GameState.PLAYER_ONE_WIN) {
-                                // Player 1 wins
-                                relayAll(game_key, "CHAT: Game over! " + Games.get(game_key).get("Player1").name + " wins!");
-                            } else if (gameState == ConnectFourGame.GameState.PLAYER_TWO_WIN) {
-                                // Player 2 wins
-                                relayAll(game_key, "CHAT: Game over! " + Games.get(game_key).get("Player2").name + " wins!");
-                            } else if (gameState == ConnectFourGame.GameState.DRAW) {
-                                // Draw
-                                relayAll(game_key, "CHAT: Game over! It's a draw!");
-                            }
-        
-                            // Reset the game state
-                            game.resetGame();
-        
-                            // Perform any other necessary cleanup or actions
-        
-                           // return;
+                            // ... handle game over condition here
                         }
         
                         // Switch the turn to the next player
                         boardToDB();
+                        Map<String, ClientConnection> gamePlayers = Games.get(game_key);
+                        ClientConnection player1 = gamePlayers.get("Player1");
+                        ClientConnection player2 = gamePlayers.get("Player2");
+                        if (player1 != null) {
+                            player1.DBToBoard();
+                        }
+                        if (player2 != null) {
+                            player2.DBToBoard();
+                        }
                         switchTurn();
                         return;
                     } else {
@@ -306,6 +300,7 @@ public class Connect4Server extends Thread {
                 relayAll(game_key, "CHAT: It's not your turn!");
             }
         }
+        
         
         
         

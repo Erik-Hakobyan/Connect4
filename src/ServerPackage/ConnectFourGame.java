@@ -75,7 +75,12 @@ public class ConnectFourGame {
     }
 
     private void switchPlayer() {
-        currentPlayer = 3 - currentPlayer;
+        if (currentPlayer == 1){
+            currentPlayer = 2;
+            return;
+        }
+        currentPlayer = 1;
+        return;
     }
 
     public int findRowForColumn(int column) {
