@@ -292,9 +292,10 @@ public class GameGUI {
         @Override
         public void actionPerformed(ActionEvent e) {
             if (isMyTurn) {
-                isMyTurn = false;
+    
                 int targetRow = findAvailableRow(column);
                 if (targetRow != -1) {
+                    isMyTurn = false;
                     Color playerColor = isPlayerOne ? Color.RED : Color.YELLOW;
                     buttonBoard[targetRow][column].setBackground(playerColor);
                     relayMessage("MOVE:" + Integer.toString(targetRow) + Integer.toString(column));

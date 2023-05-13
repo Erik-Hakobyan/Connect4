@@ -20,66 +20,6 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.sql.*;
 
-class DatabaseIntegration {
-    private static final String URL = "jdbc:mysql://localhost:3306/chat";
-    private static final String USERNAME = "root";
-    private static final String PASSWORD = "abc123!@#";
-
-    public static Connection getConnection() throws SQLException, ClassNotFoundException {
-        Class.forName("com.mysql.cj.jdbc.Driver");
-        return DriverManager.getConnection(URL, USERNAME, PASSWORD);
-    }
-
-    public static void registerUser(String username) throws SQLException, ClassNotFoundException {
-        String sql = "INSERT INTO users (username) VALUES (?)";
-
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, username);
-            stmt.executeUpdate();
-        }
-    }
-
-    public static void updateStats(String username, boolean won, boolean draw) throws SQLException, ClassNotFoundException {
-        String sql = "UPDATE users SET games_played = games_played + 1, " +
-                     "games_won = games_won + ?, " +
-                     "games_lost = games_lost + ?, " +
-                     "games_drawn = games_drawn + ? " +
-                     "WHERE username = ?";
-
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, won ? 1 : 0);
-            stmt.setInt(2, (!won && !draw) ? 1 : 0);
-            stmt.setInt(3, draw ? 1 : 0);
-            stmt.setString(4, username);
-            stmt.executeUpdate();
-        }
-    }
- 
-    public static void getStats(String username) throws SQLException, ClassNotFoundException {
-        String sql = "SELECT * FROM users WHERE username = ?";
-
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setString(1, username);
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                System.out.println("Username: " + rs.getString("username"));
-                System.out.println("Games Played: " + rs.getInt("games_played"));
-                System.out.println("Games Won: " + rs.getInt("games_won"));
-                System.out.println("Games Lost: " + rs.getInt("games_lost"));
-                System.out.println("Games Drawn: " + rs.getInt("games_drawn"));
-            } else {
-                System.out.println("No user found with username: " + username);
-            }
-        }
-    }
-}
 
 public class Connect4Server extends Thread {
     private final int port;
@@ -121,10 +61,11 @@ public class Connect4Server extends Thread {
         try {
             System.out.println("Server IP Address: " + InetAddress.getLocalHost().getHostAddress());
             System.out.println("Port: " + port);
-            ServerSocket sock = new ServerSocket(port);
-            while (live) {
-                Socket socket = sock.accept();
-                new ClientConnection(socket, this);
+            try (ServerSocket sock = new ServerSocket(port)) {
+                while (live) {
+                    Socket socket = sock.accept();
+                    new ClientConnection(socket, this);
+                }
             }
 
         } catch (UnknownHostException e) {
@@ -153,6 +94,7 @@ public class Connect4Server extends Thread {
         private final Connect4Server Server;
         Socket sock;
         private boolean isMyTurn;
+        private ConnectFourGame game;
 
         public ClientConnection(Socket socket, Connect4Server server) {
             sock = socket;
@@ -169,6 +111,7 @@ public class Connect4Server extends Thread {
             Games.put(game_key, map);
             out.println("GK:" + game_key);
             currentBoard = default_board;
+            game = new ConnectFourGame(6, 7, name, null); // Create a new game instance
             boardToDB();
             isMyTurn = true; 
             
@@ -198,6 +141,8 @@ public class Connect4Server extends Thread {
 
         private void spectate() {
             if (Games.containsKey(game_key)) {
+                String enter = "CHAT:" + name + " (" + username + ") " + "is spectating the game!";
+                Server.relayAll(game_key, enter);
                 out.println("SUCCESS");
             } else {
                 out.println("ERROR 200");
@@ -261,7 +206,7 @@ public class Connect4Server extends Thread {
         public void run() {
             initializeMode();
             String userRequest;
-            while (true) {
+            for (;;) {
                 try {
                     if ((userRequest = in.readLine()) != null) {
                         processRequest(userRequest);
@@ -313,35 +258,80 @@ public class Connect4Server extends Thread {
 
         private void validateMove(String move) {
             if (isMyTurn) {
-                // Process the move
-
-                boardToDB();
-    
-                // Switch the turn
-                switchTurn();
+                int column = Integer.parseInt(move);
+        
+                if (game.isValidMove(column)) {
+                    // Make the move
+                    boolean isValidMove = game.makeMove(column);
+        
+                    if (isValidMove) {
+                        // Update the game state or any relevant variables
+        
+                        // Check for a game over condition
+                        ConnectFourGame.GameState gameState = game.checkGameState();
+                        if (gameState != ConnectFourGame.GameState.IN_PROGRESS) {
+                            if (gameState == ConnectFourGame.GameState.PLAYER_ONE_WIN) {
+                                // Player 1 wins
+                                relayAll(game_key, "CHAT: Game over! " + Games.get(game_key).get("Player1").name + " wins!");
+                            } else if (gameState == ConnectFourGame.GameState.PLAYER_TWO_WIN) {
+                                // Player 2 wins
+                                relayAll(game_key, "CHAT: Game over! " + Games.get(game_key).get("Player2").name + " wins!");
+                            } else if (gameState == ConnectFourGame.GameState.DRAW) {
+                                // Draw
+                                relayAll(game_key, "CHAT: Game over! It's a draw!");
+                            }
+        
+                            // Reset the game state
+                            game.resetGame();
+        
+                            // Perform any other necessary cleanup or actions
+        
+                           // return;
+                        }
+        
+                        // Switch the turn to the next player
+                        boardToDB();
+                        switchTurn();
+                        return;
+                    } else {
+                        // Invalid move
+                        relayAll(game_key, "CHAT: Invalid move!");
+                    }
+                } else {
+                    // Invalid column
+                    relayAll(game_key, "CHAT: Invalid column!");
+                }
             } else {
-                // It's not this player's turn, so don't process the move
-                out.println("ERROR: It's not your turn");
+                // It's not the player's turn
+                relayAll(game_key, "CHAT: It's not your turn!");
             }
         }
+        
+        
+        
     
         private void switchTurn() {
-            // Switch the turn
-            isMyTurn = !isMyTurn;
-            // Also switch the turn for the other player
+            // Get the game players
             Map<String, ClientConnection> game = Games.get(game_key);
-            for (ClientConnection otherPlayer : game.values()) {
-                if (otherPlayer != this) {
-                    otherPlayer.isMyTurn = !otherPlayer.isMyTurn;
-                     // Send a "TURN" message to each player indicating whose turn it is
-                    DBToBoard();
-                    otherPlayer.DBToBoard();    
-                    out.println("TURN:" + (isMyTurn ? "1" : "2"));
-                    otherPlayer.out.println("TURN:" + (otherPlayer.isMyTurn ? "1" : "2"));
-                    break;
+            ClientConnection player1 = game.get("Player1");
+            ClientConnection player2 = game.get("Player2");
+        
+            // Switch the turn
+            if (player1 != null && player2 != null) {
+                if (this.equals(player1)) {
+                    player1.isMyTurn = false;
+                    player2.isMyTurn = true;
+                    player1.out.println("TURN:2");
+                    player2.out.println("TURN:1");
+                } else {
+                    player1.isMyTurn = true;
+                    player2.isMyTurn = false;
+                    player1.out.println("TURN:1");
+                    player2.out.println("TURN:2");
                 }
             }
         }
+        
 
         private void boardToDB() {
             String boardString = Arrays.stream(currentBoard)
