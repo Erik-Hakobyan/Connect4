@@ -1,7 +1,6 @@
 package ServerPackage;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
-
 import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,7 +14,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.sql.*;
@@ -38,8 +36,6 @@ public class Connect4Server extends Thread {
         start();
     }
     
-    
-
     public void stopServer() {
         live = false;
     }
@@ -85,7 +81,10 @@ public class Connect4Server extends Thread {
                 {0, 0, 0, 0, 0, 0, 0},
                 {0, 0, 0, 0, 0, 0, 0}
         };
+    
         private int[][] currentBoard;
+        private int moveOrder;
+        private int playerNumber;
         private BufferedReader in;
         private PrintStream out;
         private int requestType;
@@ -93,13 +92,12 @@ public class Connect4Server extends Thread {
         private String game_key;
         private final Connect4Server Server;
         Socket sock;
-        private boolean isMyTurn;
-        private ConnectFourGame game;
 
         public ClientConnection(Socket socket, Connect4Server server) {
             sock = socket;
             Server = server;
             verifyConnection();
+            this.moveOrder = 0;
         }
 
         private void newGame() {
@@ -110,42 +108,42 @@ public class Connect4Server extends Thread {
             map.put("Player2", null);
             Games.put(game_key, map);
             out.println("GK:" + game_key);
-            currentBoard = default_board;
-            game = new ConnectFourGame(6, 7, name, null); // Create a new game instance
-            boardToDB();
-            isMyTurn = true; 
-            
+            currentBoard = default_board;      
+   
         }
 
         private void joinGame() {
             if (Games.containsKey(game_key)) {
-                DBToBoard();
                 Map<String, ClientConnection> map_unsync = Games.get(game_key);
                 Map<String, ClientConnection> map = Collections.synchronizedMap(map_unsync);
                 if (map.get("Player1") != null && map.get("Player2") != null) {
-                    out.println("Error 100");
+                    relay("Error 100"); // Send error message for two users already in the game
                 } else if (map.get("Player1") == null) {
                     map.put("Player1", this);
                     out.println("PLAYER:1");
+                    Games.put(game_key, map);
+                    playerNumber = 1;
+                    String enter = "CHAT:" + name + " (" + username + ") " + "has entered the game!";
+                    Server.relayAll(game_key, enter);
                 } else if (map.get("Player2") == null) {
                     out.println("PLAYER:2");
                     map.put("Player2", this);
+                    Games.put(game_key, map);
+                    playerNumber = 2;
+                    String enter = "CHAT:" + name + " (" + username + ") " + "has entered the game!";
+                    Server.relayAll(game_key, enter);
                 }
-                Games.put(game_key, map);
-                String enter = "CHAT:" + name + " (" + username + ") " + "has entered the game!";
-                isMyTurn = true;
-                Server.relayAll(game_key, enter);
+                
+            } else {
+                relay("Error 200"); 
             }
         }
-
-
+        
         private void spectate() {
             if (Games.containsKey(game_key)) {
-                String enter = "CHAT:" + name + " (" + username + ") " + "is spectating the game!";
-                Server.relayAll(game_key, enter);
                 out.println("SUCCESS");
             } else {
-                out.println("ERROR 200");
+                out.println("Error 300");
             }
         }
 
@@ -178,7 +176,6 @@ public class Connect4Server extends Thread {
                     break;
                 case 2:
                     joinGame();
-                    
                     break;
                 case 3:
                     spectate();
@@ -225,6 +222,7 @@ public class Connect4Server extends Thread {
         private void processRequest(String request) {
             String[] parts;
             if (!request.isEmpty()) {
+                
                 parts = request.split(":");
                 System.out.println("REQUEST REC: " + request);
                 switch (parts[0]) {
@@ -258,126 +256,136 @@ public class Connect4Server extends Thread {
         }
 
         private void validateMove(String move) {
-            if (isMyTurn) {
-                int column = Integer.parseInt(move);
+            // Parse the move string to get the column
+            int column = Integer.parseInt(move);
         
-                if (game.isValidMove(column)) {
-                    // Make the move
-                    boolean isValidMove = game.makeMove(column);
+            // Determine the player based on the move order
+            int currentPlayer = moveOrder % 2 == 0 ? 1 : 2;
         
-                    if (isValidMove) {
-                        // Update the game state or any relevant variables
+            // Check if it's this client's turn
+            if (currentPlayer != playerNumber) {
+                out.println("It's not your turn!");
+                return;
+            }
         
-                        // Check for a game over condition
-                        ConnectFourGame.GameState gameState = game.checkGameState();
-                        if (gameState != ConnectFourGame.GameState.IN_PROGRESS) {
-                            // ... handle game over condition here
-                        }
-        
-                        // Switch the turn to the next player
-                        boardToDB();
-                        Map<String, ClientConnection> gamePlayers = Games.get(game_key);
-                        ClientConnection player1 = gamePlayers.get("Player1");
-                        ClientConnection player2 = gamePlayers.get("Player2");
-                        if (player1 != null) {
-                            player1.DBToBoard();
-                        }
-                        if (player2 != null) {
-                            player2.DBToBoard();
-                        }
-                        switchTurn();
-                        return;
-                    } else {
-                        // Invalid move
-                        relayAll(game_key, "CHAT: Invalid move!");
-                    }
-                } else {
-                    // Invalid column
-                    relayAll(game_key, "CHAT: Invalid column!");
+            // Find the first empty slot in the column
+            int row = -1;
+            for (int i = 0; i < currentBoard.length; i++) {
+                if (currentBoard[i][column] == 0) {
+                    row = i;
+                    break;
                 }
+            }
+        
+            // If the column is full, the move is invalid
+            if (row == -1) {
+                return;
+            }
+        
+            // Update the game board
+            currentBoard[row][column] = currentPlayer;
+        
+            // Increment the move order
+            moveOrder++;
+        
+            // Check for a win
+            if (checkForWin(row, column, currentPlayer)) {
+                // If win, send message to all clients
+                relayAll(game_key,"RESULT:WIN:" + currentPlayer);
+            } else if (checkForDraw()) {
+                // If draw, send message to all clients
+                relayAll(game_key,"RESULT:DRAW");
             } else {
-                // It's not the player's turn
-                relayAll(game_key, "CHAT: It's not your turn!");
-            }
-        }
-        
-        
-        
-        
-    
-        private void switchTurn() {
-            // Get the game players
-            Map<String, ClientConnection> game = Games.get(game_key);
-            ClientConnection player1 = game.get("Player1");
-            ClientConnection player2 = game.get("Player2");
-        
-            // Switch the turn
-            if (player1 != null && player2 != null) {
-                if (this.equals(player1)) {
-                    player1.isMyTurn = false;
-                    player2.isMyTurn = true;
-                    player1.out.println("TURN:2");
-                    player2.out.println("TURN:1");
-                } else {
-                    player1.isMyTurn = true;
-                    player2.isMyTurn = false;
-                    player1.out.println("TURN:1");
-                    player2.out.println("TURN:2");
-                }
+                // If ongoing, send updated game board to all clients
+                relayAll(game_key,"BOARD:" + gameBoardToString());
             }
         }
         
 
-        private void boardToDB() {
-            String boardString = Arrays.stream(currentBoard)
-                .map(row -> Arrays.stream(row)
-                    .mapToObj(Integer::toString)
-                    .collect(Collectors.joining(",")))
-                .collect(Collectors.joining(";"));
-        
-            try {
-                Connection connection = DatabaseIntegration.getConnection();
-                PreparedStatement stmt = connection.prepareStatement(
-                    "INSERT INTO game_states (game_key, board_state) VALUES (?, ?) ON DUPLICATE KEY UPDATE board_state = VALUES(board_state)");
-                stmt.setString(1, game_key);
-                stmt.setString(2, boardString);
-                stmt.executeUpdate();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+        private boolean checkForWin(int row, int column, int player) {
+            // Check for a win in the row
+            int count = 0;
+            for (int j = 0; j < currentBoard[0].length; j++) {
+                if (currentBoard[row][j] == player) {
+                    count++;
+                    if (count == 4) {
+                        return true;
+                    }
+                } else {
+                    count = 0;
+                }
             }
+        
+            // Check for a win in the column
+            count = 0;
+            for (int i = 0; i < currentBoard.length; i++) {
+                if (currentBoard[i][column] == player) {
+                    count++;
+                    if (count == 4) {
+                        return true;
+                    }
+                } else {
+                    count = 0;
+                }
+            }
+        
+            // Check for a win in the diagonal (top-left to bottom-right)
+            count = 0;
+            for (int i = row, j = column; i < currentBoard.length && j < currentBoard[0].length; i++, j++) {
+                if (currentBoard[i][j] == player) {
+                    count++;
+                    if (count == 4) {
+                        return true;
+                    }
+                } else {
+                    count = 0;
+                }
+            }
+        
+            
+                // Check for a win in the diagonal (top-right to bottom-left)
+            count = 0;
+            for (int i = row, j = column; i < currentBoard.length && j >= 0; i++, j--) {
+                if (currentBoard[i][j] == player) {
+                    count++;
+                    if (count == 4) {
+                        return true;
+                    }
+                } else {
+                    count = 0;
+                }
+            }
+
+             // No win found
+             return false;
         }
-        
-        
-        
-        private void DBToBoard() {
-            try {
-                Connection connection = DatabaseIntegration.getConnection();
-                PreparedStatement stmt = connection.prepareStatement(
-                    "SELECT board_state FROM game_states WHERE game_key = ?");
-                stmt.setString(1, game_key);
-                ResultSet rs = stmt.executeQuery();
-        
-                if (rs.next()) {
-                    String boardString = rs.getString("board_state");
-                    String[] rowStrings = boardString.split(";");
-                    for (int i = 0; i < rowStrings.length; i++) {
-                        String[] cellStrings = rowStrings[i].split(",");
-                        for (int j = 0; j < cellStrings.length; j++) {
-                            currentBoard[i][j] = Integer.parseInt(cellStrings[j]);
-                        }
+
+        private boolean checkForDraw() {
+            // The game is a draw if all cells are filled
+            for (int i = 0; i < currentBoard.length; i++) {
+                for (int j = 0; j < currentBoard[0].length; j++) {
+                    if (currentBoard[i][j] == 0) {
+                        return false;
                     }
                 }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
             }
+            return true;
         }
-        
+        private String gameBoardToString() {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < currentBoard.length; i++) {
+                for (int j = 0; j < currentBoard[0].length; j++) {
+                    sb.append(currentBoard[i][j] == 0 ? " " : currentBoard[i][j]);
+                    if (j < currentBoard[0].length - 1) {
+                        sb.append(",");
+                    }
+                }
+                sb.append("\n");
+            }
+            return sb.toString();
+        }
 
-
+    
         private void authenticate(String[] parts) {
             System.out.println("Authenticating");
             if (parts[0].equals("Authenticate")) {
@@ -402,30 +410,14 @@ public class Connect4Server extends Thread {
 
         private void statsCommand() {
             try {
-                Connection connection = DatabaseIntegration.getConnection();
-                String sql = "SELECT * FROM users WHERE username = ?";
-                PreparedStatement stmt = connection.prepareStatement(sql);
-                stmt.setString(1, username);
-                ResultSet rs = stmt.executeQuery();
-        
-                if (rs.next()) {
-                    String message = "CHAT: " + name + " Stats - " +
-                        "Games Played: " + rs.getInt("games_played") + ", " +
-                        "Games Won: " + rs.getInt("games_won") + ", " +
-                        "Games Lost: " + rs.getInt("games_lost") + ", " +
-                        "Games Drawn: " + rs.getInt("games_drawn");
-                    relayAll(game_key, message);
-                } else {
-                    String message = "CHAT: No stats available for user " + username;
-                    relayAll(game_key, message);
-                }
+                DatabaseIntegration.getStats(username);
             } catch (SQLException | ClassNotFoundException e) {
                 e.printStackTrace();
             }
         }
 
         private void newCommand() {
-            String message = "CHAT:" + name + " has started new game!";
+            String message = "CHAT:" + name + " has started new game!" ;
             relayAll(game_key, message);
         }
 
@@ -441,6 +433,4 @@ public class Connect4Server extends Thread {
     }
 
 }
-
-
 

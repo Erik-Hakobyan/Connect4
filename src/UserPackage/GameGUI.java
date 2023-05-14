@@ -9,6 +9,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
 
+import java.awt.Graphics2D;
+import static java.lang.Thread.sleep;
+
 public class GameGUI {
     private static final int ROWS = 6;
     private static final int COLUMNS = 7;
@@ -30,18 +33,99 @@ public class GameGUI {
     private JTextArea statusUpdatesTextArea;
     private String status;
     private Connect4User user;
-    private boolean isPlayerOne = true;
-    private boolean isMyTurn = false;
+    private boolean isPlayerOne = false;
+    // private JPanel clockPanel;
 
     public GameGUI(Connect4User u) {
         user = u;
+        
         try {
             UIManager.setLookAndFeel(new FlatCyanLightIJTheme());
         } catch (UnsupportedLookAndFeelException e) {
             throw new RuntimeException(e);
         }
         create();
+        
     }
+    // class ClockPanel extends JPanel {
+
+    //     static int clockSeconds = 0;
+    //     static float clockMinutes = 0;
+    
+    //     protected void createClockFace(Graphics graphic, int height, int width) {
+    //         graphic.setColor(Color.BLACK);
+    //         graphic.fillOval(width / 2 - 150, height / 2 - 150, 300, 300);
+    //         graphic.setColor(Color.WHITE);
+    //         graphic.fillOval(width / 2 - 140, height / 2 - 140, 280, 280);
+    //         graphic.setColor(Color.BLACK);
+    //         graphic.fillOval(width / 2 - 14, height / 2 - 5, 28, 28);
+    //         graphic.setFont(new Font("Georgia", Font.BOLD, 30));
+    //         graphic.drawString("60", width / 2 - 17, height / 2 - 110);
+    //         graphic.drawString("15", width / 2 + 110, height / 2 + 10);
+    //         graphic.drawString("30", width / 2 - 17, height / 2 + 130);
+    //         graphic.drawString("45", width / 2 - 130, height / 2 + 10);
+    //     }
+    
+    //     protected void drawSecondsHands(Graphics graphic, int centerX, int centerY) {
+    //         double angle = Math.toRadians(-(clockSeconds + 15) * 6 - 180);
+    //         int x = (int) (Math.cos(angle) * 120);
+    //         int y = (int) (Math.sin(angle) * 120);
+    
+    //         Graphics2D g2d = (Graphics2D) graphic;
+    //         g2d.setColor(Color.RED);
+    //         g2d.setStroke(new BasicStroke(4f));
+    //         g2d.drawLine(centerX, centerY, centerX + x, centerY - y);
+    //     }
+    
+    //     protected void drawMinutesHands(Graphics graphic, int centerX, int centerY) {
+    //         double angle = Math.toRadians(-(clockMinutes + 15) * 6 - 180);
+    //         int x = (int) (Math.cos(angle) * 100);
+    //         int y = (int) (Math.sin(angle) * 100);
+    
+    //         Graphics2D g2d = (Graphics2D) graphic;
+    //         g2d.setColor(Color.BLUE);
+    //         g2d.setStroke(new BasicStroke(4f));
+    //         g2d.drawLine(centerX, centerY, centerX + x, centerY - y);
+    //     }
+    
+    //     @Override
+    //     protected void paintComponent(Graphics graphic) {
+    //         super.paintComponent(graphic);
+    
+    //         int height = this.getHeight();
+    //         int width = this.getWidth();
+    
+    //         createClockFace(graphic, height, width);
+    
+    //         int centerX = getWidth() / 2;
+    //         int centerY = getHeight() / 2;
+    
+    //         drawSecondsHands(graphic, centerX, centerY);
+    //         drawMinutesHands(graphic, centerX, centerY);
+    
+    //         try {
+    //             sleep(1000);
+    //             clockSeconds++;
+    //             if (clockSeconds == 60) {
+    //                 clockMinutes++;
+    //                 clockSeconds = 0;
+    //             }
+    //             clockSeconds %= 60;
+    //             clockMinutes %= 60;
+    //             repaint();
+    //         } catch (InterruptedException e) {
+    //             System.out.println("Interrupted Exception: " + e.toString());
+    //         }
+    //     }
+    // }
+
+    // private void createClockPanel() {
+    //     clockPanel = new JPanel();
+    //     clockPanel.setPreferredSize(new Dimension(300, frame.getHeight()));
+
+    //     ClockPanel clock = new ClockPanel();
+    //     clockPanel.add(clock);
+    // }
 
     public void setPlayer(Boolean player) {
         isPlayerOne = player;
@@ -56,6 +140,7 @@ public class GameGUI {
         mainPanel = new JPanel(new BorderLayout());
 
         createBoardPanel();
+        // createClockPanel();
         createControlPanel();
         createChatPanel();
 
@@ -81,27 +166,36 @@ public class GameGUI {
         }
     }
 
+    // private void resetBoard() {
+    //     for (int row = 0; row < ROWS; row++) {
+    //         for (int col = 0; col < COLUMNS; col++) {
+    //             if(buttonBoard[row][col] == null){
+    //                 buttonBoard[row][col] = createCircleButton();
+    //             }else{
+    //                 buttonBoard[row][col].setBackground(Color.WHITE);
+    //             }
+    //         }
+    //     }
+    //     isMyTurn = isPlayerOne;
+    // }
     private void resetBoard() {
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLUMNS; col++) {
                 if(buttonBoard[row][col] == null){
                     buttonBoard[row][col] = createCircleButton();
-                }else{
+                } else {
                     buttonBoard[row][col].setBackground(Color.WHITE);
                 }
             }
         }
-        isMyTurn = isPlayerOne;
     }
+    
 
-    public void gameResult(String result) {
-        //PROCESS THIS
-        //WINNER/LOSER - Create a gui or something or post the results. freeze the board, etc.
-    }
+    // public void gameResult(String result) {
+    //     //PROCESS THIS
+    //     //WINNER/LOSER - Create a gui or something or post the results. freeze the board, etc.
+    // }
 
-    public void turn() {
-        isMyTurn = true;
-    }
 
     public void updateStatus(String newStatus) {
         status = newStatus;
@@ -123,7 +217,8 @@ public class GameGUI {
             addChat("SYSTEM: AN ERROR OCCURRED");
         }
     }
-
+    
+    
 
     private void createControlPanel() {
         int hGap = 10;
@@ -174,7 +269,9 @@ public class GameGUI {
     }
 
     private void createChatPanel() {
+    
         chatPanel = new JPanel(new BorderLayout());
+        // chatPanel.add(clockPanel, BorderLayout.WEST);
 
         chatArea = new JTextArea();
         chatArea.setEditable(false);
@@ -224,6 +321,37 @@ public class GameGUI {
         });
         button.setRolloverEnabled(true);
         return button;
+    }
+
+    public void updateBoard(String gameBoardString) {
+        // Parse the game board string and convert it to int[][] game board
+        String[] rows = gameBoardString.trim().split("\n");
+        int numRows = rows.length;
+        int numCols = rows[0].split(",").length;
+        int[][] gameBoard = new int[numRows][numCols];
+        
+        for (int i = 0; i < numRows; i++) {
+            String[] cells = rows[i].split(",");
+            for (int j = 0; j < numCols; j++) {
+                gameBoard[i][j] = Integer.parseInt(cells[j].trim());
+            }
+        }
+        
+        // Update the GUI based on the updated game board
+        for (int row = 0; row < numRows; row++) {
+            for (int col = 0; col < numCols; col++) {
+                if (gameBoard[row][col] == 1) {
+                    // Set GUI element for player 1 (e.g., change color, set image, etc.)
+                    buttonBoard[row][col].setBackground(Color.RED);
+                } else if (gameBoard[row][col] == 2) {
+                    // Set GUI element for player 2 (e.g., change color, set image, etc.)
+                    buttonBoard[row][col].setBackground(Color.YELLOW);
+                } else {
+                    // Set GUI element for empty cell (e.g., change color, set image, etc.)
+                    buttonBoard[row][col].setBackground(Color.WHITE);
+                }
+            }
+        }
     }
 
     public class CircleButton extends JButton {
@@ -291,20 +419,22 @@ public class GameGUI {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (isMyTurn) {
-    
+            if (isPlayerOne) {
                 int targetRow = findAvailableRow(column);
                 if (targetRow != -1) {
-                    isMyTurn = false;
                     Color playerColor = isPlayerOne ? Color.RED : Color.YELLOW;
                     buttonBoard[targetRow][column].setBackground(playerColor);
                     relayMessage("MOVE:" + Integer.toString(targetRow) + Integer.toString(column));
-                    
+                    isPlayerOne = !isPlayerOne;
+                } else {
+                    chatArea.append("SYSTEM: The column is full! \n");
                 }
             } else {
                 chatArea.append("SYSTEM: It's not your turn! \n");
             }
         }
+
+
 
         private int findAvailableRow(int column) {
             for (int row = ROWS - 1; row >= 0; row--) {
@@ -315,6 +445,7 @@ public class GameGUI {
             return -1;
         }
     }
+    
 
 
     public static void main(String[] args) {

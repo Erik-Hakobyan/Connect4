@@ -87,6 +87,7 @@ class InitialGUI extends Thread {
             @Override
             public void actionPerformed(ActionEvent e) {
                 initialCapture("1");
+                
             }
         }));
         joinGameButton.addActionListener((new ActionListener() {

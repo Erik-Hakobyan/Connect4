@@ -16,8 +16,12 @@ public class Connect4User extends Thread {
     private static GameGUI gameGUI;
     private static PrintWriter out_stream;
     private static BufferedReader in_stream;
+    private boolean isPlayerTurn = false;
+
+
 
     public Connect4User() {
+        gameGUI = new GameGUI(this);
         start();
 
     }
@@ -29,6 +33,9 @@ public class Connect4User extends Thread {
             out_stream.println(message);
             return true;
         }
+    }
+    public void setPlayerTurn(boolean isPlayerTurn) {
+        this.isPlayerTurn = isPlayerTurn;
     }
 
     public void ConnectServer(String RequestType, String name, String username, String game_id, String server_ip) {
@@ -44,16 +51,21 @@ public class Connect4User extends Thread {
             out_stream.println(connect_message);
             response = in_stream.readLine();
             if (!response.contains("SUCCESS")) {
-                if (response == "Error 100") {
+                if (response.equals("Error 100")) {
                     initGUI.addError("Error 100: 2 Users Already In Game. Spectate Instead");
-                } else if (response == "Error 200") {
-                    initGUI.addError("Error 200: Game Key is invalid");
+                } else if (response.equals("Error 200")) {
+                    SwingUtilities.invokeLater(() -> {
+                        initGUI.addError("Error 200: Game Key is invalid");
+                    });
                 }
             } else {
-                gameGUI = new GameGUI(this);
-                initGUI.changeVisibility();
-                initGUI = null;
+                // Proceed with successful connection
+                SwingUtilities.invokeLater(() -> {
+                    gameGUI = new GameGUI(this);
+                    initGUI.changeVisibility();
+                    initGUI = null;
 
+                });
             }
 
         } catch (Exception e) {
@@ -86,6 +98,8 @@ public class Connect4User extends Thread {
 
         }
     }
+    
+
 
 
     private void processRequest(String response) throws InterruptedException {
@@ -94,18 +108,20 @@ public class Connect4User extends Thread {
             if (parts.length >= 2) {
                 String command = parts[0];
                 String content = parts[1];
-                System.out.println("Received command: " + command + ", content: " + content);
+
+                
 
                 switch (command) {
                     case "CHAT":
-                        System.out.println("Updating chat...");
                         gameGUI.addChat(content);
                         break;
                     case "GK":
                         gameGUI.addChat("Your Game Key: " + content);
                         break;
-                    case "PLAYER":
-                        gameGUI.setPlayer(content == "1");
+                    case "PLAYER":    
+                        boolean isPlayer = content.equals("1");
+                        gameGUI.setPlayer(isPlayer);
+                        setPlayerTurn(isPlayer);
                         break;
                     case "STATUS":
                         gameGUI.updateStatus(content);
@@ -113,21 +129,29 @@ public class Connect4User extends Thread {
                     case "MOVE":
                         gameGUI.newMove(content);
                         break;
-                    case "TURN":
-                        gameGUI.turn();
+                    // case "TURN":
+                        // gameGUI.turn();
+                        // break;
+                    // case "RESULT":
+                    //     gameGUI.gameResult(content);
+                    //     break;
+                    case "BOARD":
+                        gameGUI.updateBoard(content);
                         break;
-                    case "RESULT":
-                        gameGUI.gameResult(content);
-                        break;
+                    
+
                     default:
                         System.out.println("Unknown command received: " + command);
                         break;
+                
                 }
             } else {
                 System.out.println("Invalid response format: " + response);
             }
         }
     }
+    
+    
 
 
     public static void main(String[] args) {
