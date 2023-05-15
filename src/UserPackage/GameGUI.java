@@ -1,26 +1,21 @@
 package UserPackage;
 
 import com.formdev.flatlaf.intellijthemes.FlatCyanLightIJTheme;
-
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicButtonUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
-
 import java.awt.Graphics2D;
 import static java.lang.Thread.sleep;
-
 public class GameGUI {
     private static final int ROWS = 6;
     private static final int COLUMNS = 7;
-    private int move_counter;
-    private JFrame frame;
+    private JFrame jf;
     private JPanel mainPanel;
     private JPanel boardPanel;
     private JPanel controlPanel;
-    private JPanel statusPanel;
     private JPanel chatPanel;
     private CircleButton[][] buttonBoard;
     private JButton drawButton;
@@ -34,7 +29,7 @@ public class GameGUI {
     private String status;
     private Connect4User user;
     private boolean isPlayerOne = false;
-    // private JPanel clockPanel;
+    private JPanel clockPanel;
 
     public GameGUI(Connect4User u) {
         user = u;
@@ -45,113 +40,124 @@ public class GameGUI {
             throw new RuntimeException(e);
         }
         create();
-        
     }
-    // class ClockPanel extends JPanel {
 
-    //     static int clockSeconds = 0;
-    //     static float clockMinutes = 0;
+    class ClockPanel extends JPanel {
+        static int clockSeconds = 0;
+        static float clockMinutes = 0;
     
-    //     protected void createClockFace(Graphics graphic, int height, int width) {
-    //         graphic.setColor(Color.BLACK);
-    //         graphic.fillOval(width / 2 - 150, height / 2 - 150, 300, 300);
-    //         graphic.setColor(Color.WHITE);
-    //         graphic.fillOval(width / 2 - 140, height / 2 - 140, 280, 280);
-    //         graphic.setColor(Color.BLACK);
-    //         graphic.fillOval(width / 2 - 14, height / 2 - 5, 28, 28);
-    //         graphic.setFont(new Font("Georgia", Font.BOLD, 30));
-    //         graphic.drawString("60", width / 2 - 17, height / 2 - 110);
-    //         graphic.drawString("15", width / 2 + 110, height / 2 + 10);
-    //         graphic.drawString("30", width / 2 - 17, height / 2 + 130);
-    //         graphic.drawString("45", width / 2 - 130, height / 2 + 10);
-    //     }
-    
-    //     protected void drawSecondsHands(Graphics graphic, int centerX, int centerY) {
-    //         double angle = Math.toRadians(-(clockSeconds + 15) * 6 - 180);
-    //         int x = (int) (Math.cos(angle) * 120);
-    //         int y = (int) (Math.sin(angle) * 120);
-    
-    //         Graphics2D g2d = (Graphics2D) graphic;
-    //         g2d.setColor(Color.RED);
-    //         g2d.setStroke(new BasicStroke(4f));
-    //         g2d.drawLine(centerX, centerY, centerX + x, centerY - y);
-    //     }
-    
-    //     protected void drawMinutesHands(Graphics graphic, int centerX, int centerY) {
-    //         double angle = Math.toRadians(-(clockMinutes + 15) * 6 - 180);
-    //         int x = (int) (Math.cos(angle) * 100);
-    //         int y = (int) (Math.sin(angle) * 100);
-    
-    //         Graphics2D g2d = (Graphics2D) graphic;
-    //         g2d.setColor(Color.BLUE);
-    //         g2d.setStroke(new BasicStroke(4f));
-    //         g2d.drawLine(centerX, centerY, centerX + x, centerY - y);
-    //     }
-    
-    //     @Override
-    //     protected void paintComponent(Graphics graphic) {
-    //         super.paintComponent(graphic);
-    
-    //         int height = this.getHeight();
-    //         int width = this.getWidth();
-    
-    //         createClockFace(graphic, height, width);
-    
-    //         int centerX = getWidth() / 2;
-    //         int centerY = getHeight() / 2;
-    
-    //         drawSecondsHands(graphic, centerX, centerY);
-    //         drawMinutesHands(graphic, centerX, centerY);
-    
-    //         try {
-    //             sleep(1000);
-    //             clockSeconds++;
-    //             if (clockSeconds == 60) {
-    //                 clockMinutes++;
-    //                 clockSeconds = 0;
-    //             }
-    //             clockSeconds %= 60;
-    //             clockMinutes %= 60;
-    //             repaint();
-    //         } catch (InterruptedException e) {
-    //             System.out.println("Interrupted Exception: " + e.toString());
-    //         }
-    //     }
-    // }
+        protected void createClockFace(Graphics graphic, int height, int width, int clockSize) {
+            int centerX = width / 2;
+            int centerY = height / 2;
+            int circleRadius = clockSize / 3;
+            int innerCircleRadius = (int) (circleRadius * 0.9);
+            int smallCircleRadius = clockSize / 50;
+            int labelOffset = (int) (circleRadius * 0.4);
+            Font font = new Font("Arial", Font.BOLD, clockSize / 10);
+            graphic.setFont(font);
 
-    // private void createClockPanel() {
-    //     clockPanel = new JPanel();
-    //     clockPanel.setPreferredSize(new Dimension(300, frame.getHeight()));
+            graphic.setColor(Color.BLACK);
+            graphic.fillOval(centerX - circleRadius, centerY - circleRadius, circleRadius * 2, circleRadius * 2);
+            graphic.setColor(Color.WHITE);
+            graphic.fillOval(centerX - innerCircleRadius, centerY - innerCircleRadius, innerCircleRadius * 2, innerCircleRadius * 2);
+            graphic.setColor(Color.BLACK);
+            graphic.fillOval(centerX - smallCircleRadius, centerY - smallCircleRadius, smallCircleRadius * 2, smallCircleRadius * 2);
+            
+            graphic.drawString("60", centerX - font.getSize() / 2, centerY - circleRadius + labelOffset);
+            graphic.drawString("15", centerX + circleRadius - labelOffset - font.getSize() / 2, centerY + font.getSize() / 2);
+            graphic.drawString("30", centerX - font.getSize() / 2, centerY + circleRadius  - labelOffset);
+            graphic.drawString("45", centerX - circleRadius + labelOffset - font.getSize() / 2, centerY + font.getSize() / 2);
+        }
+        
+        protected void drawSecondsHands(Graphics graphic, int centerX, int centerY, int clockSize) {
+            double angle = Math.toRadians(-(clockSeconds + 15) * 6 - 180);
+            int handLength = (int) (clockSize * 0.25);
+        
+            int x = (int) (Math.cos(angle) * handLength);
+            int y = (int) (Math.sin(angle) * handLength);
+        
+            Graphics2D g2d = (Graphics2D) graphic;
+            g2d.setColor(Color.RED);
+            g2d.setStroke(new BasicStroke(clockSize / 100f));
+            g2d.drawLine(centerX, centerY, centerX + x, centerY - y);
+        }
+        
+        protected void drawMinutesHands(Graphics graphic, int centerX, int centerY, int clockSize) {
+            double angle = Math.toRadians(-(clockMinutes + 15) * 6 - 180);
+            int handLength = (int) (clockSize * 0.2);
+        
+            int x = (int) (Math.cos(angle) * handLength);
+            int y = (int) (Math.sin(angle) * handLength);
+        
+            Graphics2D g2d = (Graphics2D) graphic;
+            g2d.setColor(Color.BLUE);
+            g2d.setStroke(new BasicStroke(clockSize / 150f));
+            g2d.drawLine(centerX, centerY, centerX + x, centerY - y);
+        }
+        
+        @Override
+        protected void paintComponent(Graphics graphic) {
+            super.paintComponent(graphic);
+            int height = this.getHeight();
+            int width = this.getWidth();
 
-    //     ClockPanel clock = new ClockPanel();
-    //     clockPanel.add(clock);
-    // }
+            createClockFace(graphic, height, width, 100);
+    
+            int centerX = getWidth() / 2;
+            int centerY = getHeight() / 2;
+    
+            drawSecondsHands(graphic, centerX, centerY, 100);
+            drawMinutesHands(graphic, centerX, centerY, 100);
+    
+            try {
+                sleep(1000);
+                clockSeconds++;
+                if (clockSeconds == 60) {
+                    clockMinutes++;
+                    clockSeconds = 0;
+                }
+                clockSeconds %= 60;
+                clockMinutes %= 60;
+                repaint();
+            } catch (InterruptedException e) {
+                System.out.println("Interrupted Exception: " + e.toString());
+            }
+        }
+    }
 
-    public void setPlayer(Boolean player) {
-        isPlayerOne = player;
+    private void createClockPanel() {
+        clockPanel = new JPanel() {
+            @Override
+            public Dimension getPreferredSize() {
+                int clockSize = 100;  
+                return new Dimension(clockSize, clockSize);
+            }
+        };
+        clockPanel.setLayout(new BorderLayout());
+        ClockPanel clock = new ClockPanel();
+        clockPanel.add(clock, BorderLayout.CENTER);
     }
 
     private void create() {
         status = "Waiting";
-        frame = new JFrame("Connect 4");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1000, 600);
-
-        mainPanel = new JPanel(new BorderLayout());
+        jf = new JFrame("Connect 4");
+        jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        jf.setSize(1000, 600);
 
         createBoardPanel();
-        // createClockPanel();
+        createClockPanel();
         createControlPanel();
         createChatPanel();
-
+        
+        mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(boardPanel, BorderLayout.CENTER);
         mainPanel.add(controlPanel, BorderLayout.NORTH);
         mainPanel.add(chatPanel, BorderLayout.EAST);
+        mainPanel.add(clockPanel, BorderLayout.WEST);
 
-        frame.add(mainPanel);
-        frame.setVisible(true);
+        jf.add(mainPanel);
+        jf.setVisible(true);
     }
-
 
     private void createBoardPanel() {
         boardPanel = new JPanel(new GridLayout(ROWS, COLUMNS));
@@ -166,18 +172,6 @@ public class GameGUI {
         }
     }
 
-    // private void resetBoard() {
-    //     for (int row = 0; row < ROWS; row++) {
-    //         for (int col = 0; col < COLUMNS; col++) {
-    //             if(buttonBoard[row][col] == null){
-    //                 buttonBoard[row][col] = createCircleButton();
-    //             }else{
-    //                 buttonBoard[row][col].setBackground(Color.WHITE);
-    //             }
-    //         }
-    //     }
-    //     isMyTurn = isPlayerOne;
-    // }
     private void resetBoard() {
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLUMNS; col++) {
@@ -189,18 +183,11 @@ public class GameGUI {
             }
         }
     }
-    
 
-    // public void gameResult(String result) {
-    //     //PROCESS THIS
-    //     //WINNER/LOSER - Create a gui or something or post the results. freeze the board, etc.
-    // }
-
-
-    public void updateStatus(String newStatus) {
-        status = newStatus;
+    public void setPlayer(Boolean player) {
+        isPlayerOne = player;
     }
-
+    
     public void newMove(String new_move) {
         System.out.println("newMove called with move: " + new_move);
         if (new_move == null || new_move.length() != 2) {
@@ -218,15 +205,11 @@ public class GameGUI {
         }
     }
     
-    
-
     private void createControlPanel() {
         int hGap = 10;
         int vGap = 10;
         controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, hGap, vGap));
-
         Dimension buttonSize = new Dimension(120, 30);
-
         drawButton = new JButton("Offer Draw");
         drawButton.setPreferredSize(buttonSize);
         drawButton.addActionListener(e -> {
@@ -269,10 +252,7 @@ public class GameGUI {
     }
 
     private void createChatPanel() {
-    
         chatPanel = new JPanel(new BorderLayout());
-        // chatPanel.add(clockPanel, BorderLayout.WEST);
-
         chatArea = new JTextArea();
         chatArea.setEditable(false);
         chatArea.setLineWrap(true);
@@ -280,7 +260,7 @@ public class GameGUI {
 
         JScrollPane chatScrollPane = new JScrollPane(chatArea);
         chatScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        chatScrollPane.setPreferredSize(new Dimension(300, frame.getHeight()));
+        chatScrollPane.setPreferredSize(new Dimension(300, jf.getHeight()));
 
         JPanel chatInputPanel = new JPanel(new BorderLayout());
         chatInput = new JTextField();
@@ -324,7 +304,6 @@ public class GameGUI {
     }
 
     public void updateBoard(String gameBoardString) {
-        // Parse the game board string and convert it to int[][] game board
         String[] rows = gameBoardString.trim().split("\n");
         int numRows = rows.length;
         int numCols = rows[0].split(",").length;
@@ -337,17 +316,13 @@ public class GameGUI {
             }
         }
         
-        // Update the GUI based on the updated game board
         for (int row = 0; row < numRows; row++) {
             for (int col = 0; col < numCols; col++) {
                 if (gameBoard[row][col] == 1) {
-                    // Set GUI element for player 1 (e.g., change color, set image, etc.)
                     buttonBoard[row][col].setBackground(Color.RED);
                 } else if (gameBoard[row][col] == 2) {
-                    // Set GUI element for player 2 (e.g., change color, set image, etc.)
                     buttonBoard[row][col].setBackground(Color.YELLOW);
                 } else {
-                    // Set GUI element for empty cell (e.g., change color, set image, etc.)
                     buttonBoard[row][col].setBackground(Color.WHITE);
                 }
             }
@@ -356,7 +331,6 @@ public class GameGUI {
 
     public class CircleButton extends JButton {
         private boolean isDisabled;
-
         public CircleButton() {
             super();
             setBorderPainted(false);
@@ -434,8 +408,6 @@ public class GameGUI {
             }
         }
 
-
-
         private int findAvailableRow(int column) {
             for (int row = ROWS - 1; row >= 0; row--) {
                 if (buttonBoard[row][column].getBackground() == Color.WHITE) {
@@ -446,8 +418,6 @@ public class GameGUI {
         }
     }
     
-
-
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new GameGUI(null));
     }

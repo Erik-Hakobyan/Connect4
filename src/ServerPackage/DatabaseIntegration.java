@@ -1,8 +1,14 @@
 package ServerPackage;
 
-import java.sql.*;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Connection;
+import java.sql.ResultSet;
+
 
 public class DatabaseIntegration {
+    // Only works for my code
         private static final String URL = "jdbc:mysql://localhost:3306/chat";
         private static final String USERNAME = "root";
         private static final String PASSWORD = "abc123!@#";
@@ -13,18 +19,21 @@ public class DatabaseIntegration {
         }
     
         public static void registerUser(String username) throws SQLException, ClassNotFoundException {
-            String sql = "INSERT INTO users (username) VALUES (?)";
+            String sql = "INSERT INTO PLAYERS (username) VALUES (?)";
     
             try (Connection conn = getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
-    
                 stmt.setString(1, username);
                 stmt.executeUpdate();
+            } catch (SQLException e) {
+                System.out.println("Could not connect to database");
+            } catch (ClassNotFoundException e) {
+                System.out.println("Could not find JDBC driver");
             }
         }
     
         public static void updateStats(String username, boolean won, boolean draw) throws SQLException, ClassNotFoundException {
-            String sql = "UPDATE users SET games_played = games_played + 1, " +
+            String sql = "UPDATE PLAYERS SET games_played = games_played + 1, " +
                          "games_won = games_won + ?, " +
                          "games_lost = games_lost + ?, " +
                          "games_drawn = games_drawn + ? " +
@@ -42,11 +51,10 @@ public class DatabaseIntegration {
         }
      
         public static void getStats(String username) throws SQLException, ClassNotFoundException {
-            String sql = "SELECT * FROM users WHERE username = ?";
+            String sql = "SELECT * FROM PLAYERS WHERE username = ?";
     
             try (Connection conn = getConnection();
                  PreparedStatement stmt = conn.prepareStatement(sql)) {
-    
                 stmt.setString(1, username);
                 ResultSet rs = stmt.executeQuery();
     

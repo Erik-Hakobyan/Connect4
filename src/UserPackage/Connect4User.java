@@ -1,7 +1,6 @@
 package UserPackage;
 
 import com.formdev.flatlaf.FlatDarculaLaf;
-
 import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,21 +8,14 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-
 public class Connect4User extends Thread {
-
     private static InitialGUI initGUI;
     private static GameGUI gameGUI;
     private static PrintWriter out_stream;
     private static BufferedReader in_stream;
-    private boolean isPlayerTurn = false;
-
-
-
+    
     public Connect4User() {
-        gameGUI = new GameGUI(this);
         start();
-
     }
 
     public boolean relay(String message) {
@@ -33,9 +25,6 @@ public class Connect4User extends Thread {
             out_stream.println(message);
             return true;
         }
-    }
-    public void setPlayerTurn(boolean isPlayerTurn) {
-        this.isPlayerTurn = isPlayerTurn;
     }
 
     public void ConnectServer(String RequestType, String name, String username, String game_id, String server_ip) {
@@ -48,9 +37,11 @@ public class Connect4User extends Thread {
             Socket socket = new Socket(ip, Integer.parseInt(port));
             in_stream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out_stream = new PrintWriter(socket.getOutputStream(), true);
+            
             out_stream.println(connect_message);
             response = in_stream.readLine();
             if (!response.contains("SUCCESS")) {
+                socket.close();
                 if (response.equals("Error 100")) {
                     initGUI.addError("Error 100: 2 Users Already In Game. Spectate Instead");
                 } else if (response.equals("Error 200")) {
@@ -59,19 +50,16 @@ public class Connect4User extends Thread {
                     });
                 }
             } else {
-                // Proceed with successful connection
                 SwingUtilities.invokeLater(() -> {
                     gameGUI = new GameGUI(this);
                     initGUI.changeVisibility();
                     initGUI = null;
-
                 });
             }
 
         } catch (Exception e) {
             initGUI.addError("Socket Failure. Check IP:Port.");
         }
-
     }
 
     @Override
@@ -95,12 +83,8 @@ public class Connect4User extends Thread {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-
         }
     }
-    
-
-
 
     private void processRequest(String response) throws InterruptedException {
         if (response != null && !response.isEmpty()) {
@@ -108,9 +92,6 @@ public class Connect4User extends Thread {
             if (parts.length >= 2) {
                 String command = parts[0];
                 String content = parts[1];
-
-                
-
                 switch (command) {
                     case "CHAT":
                         gameGUI.addChat(content);
@@ -121,29 +102,16 @@ public class Connect4User extends Thread {
                     case "PLAYER":    
                         boolean isPlayer = content.equals("1");
                         gameGUI.setPlayer(isPlayer);
-                        setPlayerTurn(isPlayer);
-                        break;
-                    case "STATUS":
-                        gameGUI.updateStatus(content);
                         break;
                     case "MOVE":
                         gameGUI.newMove(content);
                         break;
-                    // case "TURN":
-                        // gameGUI.turn();
-                        // break;
-                    // case "RESULT":
-                    //     gameGUI.gameResult(content);
-                    //     break;
                     case "BOARD":
                         gameGUI.updateBoard(content);
                         break;
-                    
-
                     default:
                         System.out.println("Unknown command received: " + command);
                         break;
-                
                 }
             } else {
                 System.out.println("Invalid response format: " + response);

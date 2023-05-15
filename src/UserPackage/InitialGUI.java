@@ -23,7 +23,6 @@ class InitialGUI extends Thread {
     }
 
     public void initialize() {
-        int rightPadding = 20;
         frame = new JFrame("Welcome to Connect4");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(500, 500);
@@ -35,44 +34,53 @@ class InitialGUI extends Thread {
         name_label.setVerticalAlignment(SwingConstants.CENTER);
         name_label.setHorizontalAlignment(SwingConstants.CENTER);
         inputPanel.add(name_label);
+
         name_text_field = new CustomJTextField(1, 50);
         name_text_field.setHorizontalAlignment(SwingConstants.CENTER);
         inputPanel.add(name_text_field);
+
         JLabel username_label = new JLabel("Username: ");
         username_label.setVerticalAlignment(SwingConstants.CENTER);
         username_label.setHorizontalAlignment(SwingConstants.CENTER);
         inputPanel.add(username_label);
+
         username_text_field = new CustomJTextField(1, 50);
         username_text_field.setHorizontalAlignment(SwingConstants.CENTER);
         inputPanel.add(username_text_field);
+
         JLabel game_id_label = new JLabel("Game ID:");
         game_id_label.setVerticalAlignment(SwingConstants.CENTER);
         game_id_label.setHorizontalAlignment(SwingConstants.CENTER);
         inputPanel.add(game_id_label);
+
         game_id_text_field = new CustomJTextField(1, 50);
         game_id_text_field.setHorizontalAlignment(SwingConstants.CENTER);
         inputPanel.add(game_id_text_field);
+
         JButton newGameButton = new JButton("New Game");
         JButton joinGameButton = new JButton("Join Game");
         JButton spectateGameButton = new JButton("Spectate Game");
         JLabel server_ip_label = new JLabel("Server IP:Port");
+
         server_ip_label.setVerticalAlignment(SwingConstants.CENTER);
         server_ip_label.setHorizontalAlignment(SwingConstants.CENTER);
         inputPanel.add(server_ip_label);
+
         server_ip_text_field = new CustomJTextField(1, 50);
         server_ip_text_field.setHorizontalAlignment(SwingConstants.CENTER);
         inputPanel.add(server_ip_text_field);
+
         JPanel buttonPanel = new JPanel(new GridLayout(1, 3));
         buttonPanel.add(newGameButton);
         buttonPanel.add(joinGameButton);
         buttonPanel.add(spectateGameButton);
-
-
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 20, 10));
+
         JPanel statusUpdatesPanel = new JPanel(new BorderLayout());
         JLabel statusUpdatesLabel = new JLabel("Status Updates:");
         statusUpdatesLabel.setHorizontalAlignment(SwingConstants.CENTER);
         statusUpdatesPanel.add(statusUpdatesLabel, BorderLayout.NORTH);
+
         statusUpdatesTextArea = new JTextArea();
         JScrollPane statusUpdatesScrollPane = new JScrollPane(statusUpdatesTextArea);
         statusUpdatesPanel.add(statusUpdatesScrollPane, BorderLayout.CENTER);
@@ -81,13 +89,10 @@ class InitialGUI extends Thread {
         frame.add(buttonPanel, BorderLayout.CENTER);
         frame.add(statusUpdatesPanel, BorderLayout.SOUTH);
 
-
-        //REQUEST TYPES: 1 IS NEW GAME, 2 IS JOIN GAME, 3 IS SPECTATE
         newGameButton.addActionListener((new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                initialCapture("1");
-                
+                initialCapture("1");    
             }
         }));
         joinGameButton.addActionListener((new ActionListener() {
@@ -104,7 +109,6 @@ class InitialGUI extends Thread {
         }));
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
-
     }
 
     public void changeVisibility() {
@@ -145,7 +149,6 @@ class InitialGUI extends Thread {
             Connect4UserRef.ConnectServer(RequestType, name, username, game_id, server_ip);
         }
     }
-
     void addError(String error) {
         statusUpdatesTextArea.setText(error);
     }
